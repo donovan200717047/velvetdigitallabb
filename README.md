@@ -63,4 +63,4 @@ Vai su **https://velvetdigitallabb.netlify.app/admin/**, clicca **Login with Git
 
 - Il codice usa già l'indirizzo `https://velvetdigitallabb.netlify.app` (canonical, Open Graph, sitemap). Su Netlify il nome del sito deve essere `velvetdigitallabb` (Site configuration → Change site name). Se un giorno usi un dominio tuo, sostituisci quell'indirizzo dal pannello (Impostazioni), in `admin/config.yml`, `robots.txt`, `sitemap.xml` e nei `<head>` dei file HTML.
 - I social si aggiungono dal pannello: **Impostazioni → Brand e social**. La colonna "Follow" del footer compare da sola.
-- I prezzi (€17.90) sono quelli degli annunci Etsy di oggi: se li cambi su Etsy, aggiornali anche dal pannello, oppure lascia `price: ""` per non mostrarli.
+- I prezzi sono quelli letti dagli annunci Etsy: se li cambi su Etsy, aggiornali anche dal pannello, oppure lascia `price: ""` per non mostrarli.

@@ -47,7 +47,8 @@
 
   const isLive = (p) => typeof p.url === "string" && /^https:\/\//.test(p.url);
   const productPage = (p) => `product.html?p=${encodeURIComponent(p.id)}`;
-  const featured = PRODUCTS.filter((p) => p.featured);
+  // In evidenza: i più recenti per primi (l'ultimo aggiunto al catalogo è il più nuovo).
+  const featured = PRODUCTS.filter((p) => p.featured).reverse();
 
   // Attributi standard dei link esterni verso Etsy (nuova scheda, sicuri).
   const EXT = 'target="_blank" rel="noopener noreferrer"';
@@ -99,7 +100,9 @@
   }
 
   /* ---------------------------------------------------------------------------
-     A2. FEATURED — righe editoriali grandi, alternate
+     A2. CARD PRODOTTO — un unico componente compatto, usato ovunque
+     (rail featured, catalogo, "Pairs well with"). Una sola card da
+     mantenere = stile coerente anche con 500 prodotti.
      ------------------------------------------------------------------------ */
   const specsHTML = (p) =>
     p.specs && p.specs.length
@@ -109,123 +112,161 @@
     p.includes && p.includes.length ? `<ul class="includes">${p.includes.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>` : "";
   const priceHTML = (p) => (p.price ? `<p class="price">${esc(p.price)}<small>Price on Etsy</small></p>` : "");
 
-  function renderFeatured() {
-    const root = $("[data-featured]");
-    if (!root) return;
-    root.innerHTML = featured
-      .map((p, i) => {
-        const hover = p.gallery && p.gallery[0];
-        return `
-        <article class="feature" aria-labelledby="f-${esc(p.id)}">
-          <div class="feature__media" data-reveal="mask">
-            <span class="feature__num" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span>
-            <a class="frame" ${isLive(p) ? etsyHref(p) : `href="${productPage(p)}"`} data-tilt tabindex="-1" aria-hidden="true">
-              ${img(p.image, { alt: "", sizes: "(max-width: 900px) 100vw, 58vw" })}
-              ${hover ? img(hover, { alt: "", sizes: "(max-width: 900px) 100vw, 58vw" }) : ""}
-              ${p.badge ? `<span class="badge">${esc(p.badge)}</span>` : ""}
-            </a>
+  const CARD_SIZES = "(max-width: 640px) 50vw, (max-width: 1100px) 33vw, 260px";
+  function cardHTML(p, i = 0) {
+    const hover = p.gallery && p.gallery[0];
+    return `
+      <li class="pcard" style="--i:${i % 12}">
+        <div class="pcard__media">
+          ${img(p.image, { alt: p.etsyTitle || p.name, sizes: CARD_SIZES })}
+          ${hover ? img(hover, { alt: "", sizes: CARD_SIZES }) : ""}
+          ${p.badge ? `<span class="pcard__badge">${esc(p.badge)}</span>` : ""}
+        </div>
+        <div class="pcard__body">
+          <p class="pcard__cat">${esc(p.category || "")}</p>
+          <h3 class="pcard__name">${
+            isLive(p) ? `<a ${etsyHref(p)}>${esc(p.name)}${NEW_TAB}</a>` : `<a href="${productPage(p)}">${esc(p.name)}</a>`
+          }</h3>
+          <div class="pcard__foot">
+            <span class="pcard__price">${isLive(p) ? esc(p.price || "") : "Coming soon"}</span>
+            <a class="pcard__more" href="${productPage(p)}">Details<span class="visually-hidden"> about ${esc(p.name)}</span></a>
           </div>
-          <div class="feature__body">
-            <p class="eyebrow feature__cat" data-reveal>${esc(p.category || "")}</p>
-            <h3 class="feature__name" id="f-${esc(p.id)}" data-reveal style="--d:.05s">${esc(p.name)}</h3>
-            ${p.tagline ? `<p class="feature__tag" data-reveal style="--d:.1s">${esc(p.tagline)}</p>` : ""}
-            <p class="feature__desc" data-reveal style="--d:.15s">${esc(p.description)}</p>
-            <div data-reveal style="--d:.2s">${specsHTML(p)}${includesHTML(p)}</div>
-            <div class="buy" data-reveal style="--d:.25s">
-              ${priceHTML(p)}
-              ${
-                isLive(p)
-                  ? `<a class="btn btn--dark" ${etsyHref(p)}>Buy on Etsy ${ARROW}${NEW_TAB}</a>`
-                  : `<span class="btn btn--line" aria-disabled="true">Coming soon</span>`
-              }
-              <a class="link-underline" href="${productPage(p)}">View details</a>
-            </div>
-          </div>
-        </article>`;
-      })
-      .join("");
-    // Se non c'è nessun prodotto "featured" nascondiamo la sezione intera.
-    if (!featured.length) $("#featured")?.setAttribute("hidden", "");
+        </div>
+      </li>`;
   }
 
   /* ---------------------------------------------------------------------------
-     A3. COLLECTION — griglia + filtri per categoria
+     A3. FEATURED — rail orizzontale con frecce e scroll-snap
      ------------------------------------------------------------------------ */
-  function cardHTML(p, i) {
-    const hover = p.gallery && p.gallery[0];
-    return `
-      <article class="card" data-cat="${esc(p.category || "")}" data-reveal style="--d:${(i % 3) * 0.08}s">
-        <div class="frame">
-          ${img(p.image, { alt: p.etsyTitle || p.name, sizes: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" })}
-          ${hover ? img(hover, { alt: "", sizes: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" }) : ""}
-          ${p.badge ? `<span class="badge">${esc(p.badge)}</span>` : ""}
-        </div>
-        <div class="card__body">
-          <p class="card__cat">${esc(p.category || "")}</p>
-          <h3 class="card__name">${
-            isLive(p) ? `<a ${etsyHref(p)}>${esc(p.name)}${NEW_TAB}</a>` : esc(p.name)
-          }</h3>
-          <p class="card__desc">${esc(p.tagline || p.description)}</p>
-          <div class="card__foot">
-            <span class="card__price">${esc(p.price || "")}</span>
-            ${
-              isLive(p)
-                ? `<span class="card__cta" aria-hidden="true">View on Etsy ${ARROW}</span>`
-                : `<span class="card__cta">Coming soon</span>`
-            }
-          </div>
-          <a class="card__details link-underline" href="${productPage(p)}">Details<span class="visually-hidden"> about ${esc(p.name)}</span></a>
-        </div>
-      </article>`;
+  function renderFeatured() {
+    const rail = $("[data-featured]");
+    if (!rail) return;
+    if (!featured.length) { $("#featured")?.setAttribute("hidden", ""); return; }
+    rail.innerHTML = featured.map(cardHTML).join("");
+
+    const prev = $("[data-rail-prev]");
+    const next = $("[data-rail-next]");
+    // Scorre di "una pagina" di card: la larghezza visibile meno una card.
+    const step = () => Math.max(rail.clientWidth * 0.8, 240);
+    prev?.addEventListener("click", () => rail.scrollBy({ left: -step(), behavior: reduceMotion ? "auto" : "smooth" }));
+    next?.addEventListener("click", () => rail.scrollBy({ left: step(), behavior: reduceMotion ? "auto" : "smooth" }));
+    // Disattiva le frecce quando sei all'inizio/alla fine o se tutto è già visibile.
+    const update = () => {
+      const max = rail.scrollWidth - rail.clientWidth - 2;
+      if (prev) prev.disabled = rail.scrollLeft <= 2;
+      if (next) next.disabled = rail.scrollLeft >= max;
+      $(".rail-nav")?.toggleAttribute("hidden", max <= 0);
+    };
+    rail.addEventListener("scroll", () => requestAnimationFrame(update), { passive: true });
+    window.addEventListener("resize", update);
+    update();
   }
 
-  // Card finale onesta: invita a seguire lo shop, senza prodotti inventati.
-  const soonCard = () => `
-      <article class="card card--soon" data-reveal data-always>
-        <div class="card__body">
-          <p class="card__cat">In the studio</p>
-          <h3 class="card__name">More tools are on the way.</h3>
-          <p class="card__desc">New releases land on Etsy first. Favourite the shop to hear about them.</p>
-          <a class="btn btn--line btn--small" href="${esc(SITE.shopUrl)}" ${EXT}>Follow on Etsy ${ARROW}${NEW_TAB}</a>
-        </div>
-      </article>`;
+  /* ---------------------------------------------------------------------------
+     A4. CATALOGO — ricerca + categorie + ordinamento + "Load more"
+     Lo "stato" (cosa cerco, quale categoria, quanti ne mostro) vive in un
+     oggetto; ogni interazione lo cambia e chiama render(). Lo stato finisce
+     anche nell'URL (?q=...&cat=...) così una ricerca si può condividere.
+     ------------------------------------------------------------------------ */
+  const priceNum = (p) => parseFloat(String(p.price || "").replace(/[^\d.,]/g, "").replace(",", ".")) || Infinity;
+  // Normalizza per la ricerca: minuscole e senza accenti ("Città" → "citta").
+  const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
   function renderCollection() {
     const grid = $("[data-grid]");
-    const filtersEl = $("[data-filters]");
     if (!grid) return;
-    grid.innerHTML = PRODUCTS.map(cardHTML).join("") + soonCard();
+    const chipsEl = $("[data-filters]");
+    const searchEl = $("[data-search]");
+    const sortEl = $("[data-sort]");
+    const moreEl = $("[data-more]");
+    const statusEl = $("[data-status]");
+    const emptyEl = $("[data-empty]");
+    const PAGE = window.matchMedia("(min-width: 1100px)").matches ? 15 : 12;
 
-    // Le categorie si ricavano dai prodotti: nuove categorie = nuovi filtri,
-    // in automatico. new Set() elimina i duplicati.
-    const cats = [...new Set(PRODUCTS.map((p) => p.category).filter(Boolean))];
-    if (!filtersEl) return;
-    if (cats.length < 2) { filtersEl.hidden = true; return; } // un solo filtro non serve
+    // Indice di ricerca calcolato una volta sola: veloce anche con 500+ prodotti.
+    const index = PRODUCTS.map((p, order) => ({ p, order, text: norm([p.name, p.tagline, p.category, p.description, p.etsyTitle].join(" ")) }));
 
-    filtersEl.innerHTML =
-      ["All", ...cats].map((c, i) => `<button class="filter" type="button" aria-pressed="${i === 0}" data-filter="${esc(c)}">${esc(c)}</button>`).join("") +
-      `<span class="filters__count" data-count></span>`;
+    const params = new URLSearchParams(location.search);
+    const state = { q: params.get("q") || "", cat: params.get("cat") || "All", sort: params.get("sort") || "featured", shown: PAGE };
 
-    const count = $("[data-count]", filtersEl);
-    const apply = (cat) => {
-      let n = 0;
-      $$(".card", grid).forEach((card) => {
-        if (card.hasAttribute("data-always")) return;
-        const show = cat === "All" || card.dataset.cat === cat;
-        card.hidden = !show;
-        if (show) n++;
-      });
-      count.textContent = `${n} product${n === 1 ? "" : "s"}`;
+    // Categorie con conteggio, generate dai dati.
+    const counts = PRODUCTS.reduce((m, p) => (p.category ? m.set(p.category, (m.get(p.category) || 0) + 1) : m), new Map());
+    const cats = ["All", ...[...counts.keys()].sort()];
+    if (!cats.includes(state.cat)) state.cat = "All";
+    chipsEl.innerHTML = cats
+      .map((c) => `<button class="chip-btn" type="button" data-cat="${esc(c)}" aria-pressed="${c === state.cat}">${esc(c)}<span>${c === "All" ? PRODUCTS.length : counts.get(c)}</span></button>`)
+      .join("");
+    if (cats.length < 3) chipsEl.hidden = true; // una sola categoria: i filtri non servono
+
+    searchEl.value = state.q;
+    sortEl.value = state.sort;
+
+    const results = () => {
+      const terms = norm(state.q).split(/\s+/).filter(Boolean);
+      let list = index.filter(({ p, text }) => (state.cat === "All" || p.category === state.cat) && terms.every((t) => text.includes(t)));
+      const by = {
+        featured: (a, b) => (b.p.featured - a.p.featured) || (b.order - a.order),
+        newest: (a, b) => b.order - a.order,
+        "price-asc": (a, b) => priceNum(a.p) - priceNum(b.p),
+        "price-desc": (a, b) => (priceNum(b.p) === Infinity ? -1 : priceNum(b.p)) - (priceNum(a.p) === Infinity ? -1 : priceNum(a.p)),
+        az: (a, b) => a.p.name.localeCompare(b.p.name)
+      };
+      return list.sort(by[state.sort] || by.featured).map((x) => x.p);
     };
-    // "Event delegation": un solo listener sul contenitore invece di uno per
-    // bottone. L'evento "risale" (bubbling) dal bottone cliccato fino a qui.
-    filtersEl.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-filter]");
-      if (!btn) return;
-      $$("[data-filter]", filtersEl).forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
-      apply(btn.dataset.filter);
+
+    const syncURL = () => {
+      const u = new URL(location.href);
+      ["q", "cat", "sort"].forEach((k) => u.searchParams.delete(k));
+      if (state.q) u.searchParams.set("q", state.q);
+      if (state.cat !== "All") u.searchParams.set("cat", state.cat);
+      if (state.sort !== "featured") u.searchParams.set("sort", state.sort);
+      history.replaceState(null, "", u);
+    };
+
+    // append = true → aggiunge solo le nuove card ("Load more") senza ridisegnare tutto.
+    const render = (append = false) => {
+      const list = results();
+      const from = append ? grid.children.length : 0;
+      const slice = list.slice(from, state.shown);
+      if (append) grid.insertAdjacentHTML("beforeend", slice.map((p, i) => cardHTML(p, i)).join(""));
+      else grid.innerHTML = slice.map((p, i) => cardHTML(p, i)).join("");
+      const shown = Math.min(state.shown, list.length);
+      statusEl.textContent = list.length ? `Showing ${shown} of ${list.length} product${list.length === 1 ? "" : "s"}` : "";
+      moreEl.hidden = shown >= list.length;
+      moreEl.textContent = `Load more (${list.length - shown})`;
+      emptyEl.hidden = list.length > 0;
+      syncURL();
+    };
+
+    chipsEl.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-cat]");
+      if (!b) return;
+      state.cat = b.dataset.cat;
+      state.shown = PAGE;
+      $$("[data-cat]", chipsEl).forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      render();
     });
-    apply("All");
+    // "Debounce": aspetta 150 ms dall'ultimo tasto prima di filtrare.
+    let t;
+    searchEl.addEventListener("input", () => {
+      clearTimeout(t);
+      t = setTimeout(() => { state.q = searchEl.value.trim(); state.shown = PAGE; render(); }, 150);
+    });
+    sortEl.addEventListener("change", () => { state.sort = sortEl.value; state.shown = PAGE; render(); });
+    moreEl.addEventListener("click", () => {
+      const before = grid.children.length;
+      state.shown += PAGE;
+      render(true);
+      // Accessibilità: il focus va sulla prima card appena aggiunta.
+      grid.children[before]?.querySelector("a")?.focus({ preventScroll: true });
+    });
+    $("[data-reset]")?.addEventListener("click", () => {
+      Object.assign(state, { q: "", cat: "All", shown: PAGE });
+      searchEl.value = "";
+      $$("[data-cat]", chipsEl).forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.cat === "All")));
+      render();
+    });
+    render();
   }
 
   /* ---------------------------------------------------------------------------
@@ -237,7 +278,10 @@
     if (list) {
       list.insertAdjacentHTML(
         "afterbegin",
-        PRODUCTS.filter(isLive).map((p) => `<li><a href="${productPage(p)}">${esc(p.name)}</a></li>`).join("")
+        // Massimo 5 link (prima quelli in evidenza): con centinaia di prodotti il footer resta corto.
+        [...featured, ...PRODUCTS.filter((p) => !p.featured)].filter(isLive).slice(0, 5)
+          .map((p) => `<li><a href="${productPage(p)}">${esc(p.name)}</a></li>`).join("") +
+          `<li><a href="./#collection">All products</a></li>`
       );
     }
     const social = $("[data-footer-social]");
@@ -307,7 +351,8 @@
     $('meta[property="og:image"]')?.setAttribute("content", p.image);
 
     const images = [p.image, ...(p.gallery || [])];
-    const others = PRODUCTS.filter((x) => x.id !== p.id);
+    // Correlati: prima la stessa categoria, poi gli altri; massimo 4.
+    const others = [...PRODUCTS.filter((x) => x.id !== p.id && x.category === p.category), ...PRODUCTS.filter((x) => x.id !== p.id && x.category !== p.category)].slice(0, 4);
 
     root.innerHTML = `
       <section class="p-hero velvet" aria-labelledby="p-title">
@@ -356,7 +401,7 @@
                 <p class="eyebrow" data-reveal>Pairs well with</p>
                 <h2 class="section__title" id="more-title" data-reveal style="--d:.1s">More from the <em>studio</em>.</h2>
               </div></header>
-              <div class="grid">${others.map(cardHTML).join("")}</div>
+              <ul class="grid" aria-label="Related products">${others.map(cardHTML).join("")}</ul>
             </div></section>`
           : ""
       }

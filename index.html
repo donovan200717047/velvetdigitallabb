@@ -167,32 +167,76 @@
       </div>
     </div>
 
-    <!-- ===================== FEATURED ===================== -->
+    <!-- ===================== FEATURED =====================
+         Una "rail" orizzontale di card compatte: regge 4 prodotti come 40.
+         Si riempie da sola con i prodotti che hanno featured: true. -->
     <section class="section featured" id="featured" aria-labelledby="featured-title">
       <div class="container">
-        <header class="section__head">
+        <header class="rail-head">
           <div>
             <p class="eyebrow" data-reveal><span class="idx">01</span> Featured</p>
-            <h2 class="section__title" id="featured-title" data-reveal style="--d:.1s">Tools for the part<br>most people <em>skip</em>.</h2>
+            <h2 class="section__title" id="featured-title" data-reveal style="--d:.1s">Start <em>here</em>.</h2>
           </div>
-          <p class="section__intro" data-reveal style="--d:.2s">Strategy, structure and words come before colours and code. Our workbooks give that thinking a clear, beautiful place to happen.</p>
+          <div class="rail-head__side" data-reveal style="--d:.15s">
+            <p class="rail-head__intro">Our most complete tools for planning your brand and website.</p>
+            <div class="rail-nav">
+              <button class="rail-btn" type="button" data-rail-prev aria-label="Scroll featured products left">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+              </button>
+              <button class="rail-btn" type="button" data-rail-next aria-label="Scroll featured products right">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
         </header>
-        <div data-featured><!-- generato da main.js --></div>
+      </div>
+      <div class="rail-wrap">
+        <ul class="rail" data-featured aria-label="Featured products"></ul>
       </div>
     </section>
 
-    <!-- ===================== COLLECTION ===================== -->
+    <!-- ===================== COLLECTION =====================
+         Catalogo pensato per centinaia di prodotti: ricerca, filtri per
+         categoria, ordinamento e "Load more" (ne mostra pochi alla volta). -->
     <section class="section collection" id="collection" aria-labelledby="collection-title">
       <div class="container">
-        <header class="section__head">
+        <header class="shop-head">
           <div>
-            <p class="eyebrow" data-reveal><span class="idx">02</span> The collection</p>
-            <h2 class="section__title" id="collection-title" data-reveal style="--d:.1s">The full <em>studio</em> shelf.</h2>
+            <p class="eyebrow" data-reveal><span class="idx">02</span> Shop all</p>
+            <h2 class="section__title" id="collection-title" data-reveal style="--d:.1s">The full <em>shelf</em>.</h2>
           </div>
-          <p class="section__intro" data-reveal style="--d:.2s">Every product opens on Etsy, where you can read the full listing and buy securely. Files are ready to download right after purchase.</p>
+          <p class="shop-head__note" data-reveal style="--d:.15s">Every product opens on Etsy for secure checkout and instant download.</p>
         </header>
-        <div class="filters" role="group" aria-label="Filter products by category" data-filters></div>
-        <div class="grid" data-grid aria-live="polite"></div>
+
+        <div class="toolbar" data-reveal style="--d:.2s">
+          <div class="search">
+            <label class="visually-hidden" for="shop-search">Search products</label>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+            <input id="shop-search" type="search" placeholder="Search workbooks, templates…" autocomplete="off" data-search>
+          </div>
+          <div class="sort">
+            <label for="shop-sort">Sort</label>
+            <select id="shop-sort" data-sort>
+              <option value="featured">Featured</option>
+              <option value="newest">Newest</option>
+              <option value="price-asc">Price: low to high</option>
+              <option value="price-desc">Price: high to low</option>
+              <option value="az">Name: A–Z</option>
+            </select>
+          </div>
+        </div>
+        <div class="chips" role="group" aria-label="Filter products by category" data-filters></div>
+
+        <p class="shop-status" role="status" data-status></p>
+        <ul class="grid" data-grid aria-label="Products"></ul>
+        <div class="empty" data-empty hidden>
+          <p>No products match your search.</p>
+          <button class="btn btn--line btn--small" type="button" data-reset>Clear filters</button>
+        </div>
+        <div class="more">
+          <button class="btn btn--line" type="button" data-more hidden>Load more</button>
+          <a class="link-underline" data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">Browse the shop on Etsy ↗<span class="visually-hidden"> (opens in a new tab)</span></a>
+        </div>
         <noscript>
           <p>Browse every product on our <a href="https://www.etsy.com/shop/VelvetDigitalLabb">Etsy shop</a>.</p>
         </noscript>
@@ -279,7 +323,7 @@
           </details>
           <details>
             <summary>Which product should I start with?</summary>
-            <p>If you are still deciding what your website should include and how it should be organised, start with the Website Blueprint Kit. If your structure is clear and you need help writing the words, the Website Content Planner is the next step.</p>
+            <p>Follow the order of the work: the Brand Strategy Workbook if you are still defining your brand, the Website Blueprint Kit to plan your site's structure, and the Website Content Planner to write every page. The Brand &amp; Website Starter Bundle includes all three.</p>
           </details>
         </div>
       </div>

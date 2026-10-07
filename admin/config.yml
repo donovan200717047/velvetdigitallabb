@@ -1,7 +1,7 @@
 # =============================================================================
 # Configurazione del pannello /admin (Decap CMS)
 # -----------------------------------------------------------------------------
-# UNICA RIGA DA CAMBIARE: "repo" → il tuo nome utente GitHub / nome repository
+# "repo" = utente GitHub / nome del repository (già impostato)
 # =============================================================================
 backend:
   name: github
@@ -51,7 +51,7 @@ collections:
                 widget: image
                 choose_url: true
                 hint: "Carica un file (JPG/WebP, circa 1200 px) oppure incolla il link di un'immagine Etsy."
-              - { label: "Categoria", name: category, widget: string, hint: "Le categorie diventano i filtri della collezione. Es. Website Planning, Copywriting, Branding" }
+              - { label: "Categoria", name: category, widget: string, hint: "Diventa un filtro del catalogo. Usa sempre lo stesso nome: Branding, Website Planning, Copywriting, Bundles…" }
               - { label: "Frase breve (tagline)", name: tagline, widget: string, required: false }
               - { label: "Descrizione", name: description, widget: text }
               - { label: "Prezzo", name: price, widget: string, required: false, hint: "Es. €17.90 — lascia vuoto per non mostrarlo" }

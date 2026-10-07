@@ -28,7 +28,7 @@
         }
       ],
       "audience": "Freelancers, small business owners and web designers",
-      "price": "€17.90",
+      "price": "€16.00",
       "image": "https://i.etsystatic.com/68286021/r/il/caf254/8626634770/il_794xN.8626634770_bdpo.jpg",
       "gallery": [
         "https://i.etsystatic.com/68286021/r/il/b5a9ff/8626624908/il_794xN.8626624908_tv47.jpg",
@@ -70,7 +70,7 @@
         }
       ],
       "audience": "Freelancers, coaches and small business owners",
-      "price": "€17.90",
+      "price": "€16.00",
       "image": "https://i.etsystatic.com/68286021/r/il/326278/8631265278/il_794xN.8631265278_s6xs.jpg",
       "gallery": [
         "https://i.etsystatic.com/68286021/r/il/a4032a/8631265266/il_794xN.8631265266_bryv.jpg",
@@ -81,7 +81,92 @@
       ],
       "url": "https://velvetdigitallabb.etsy.com/listing/4589535244",
       "featured": true,
+      "badge": ""
+    },
+    {
+      "id": "brand-strategy-workbook",
+      "name": "Brand Strategy Workbook",
+      "etsyTitle": "Brand Strategy Workbook | Canva Template for Freelancers (3 Colors)",
+      "category": "Branding",
+      "tagline": "Know exactly what makes you different.",
+      "description": "A 31-page Canva workbook that takes you from “I know what I do, but I can't explain why it's different” to a clear, written brand strategy — foundation, audience, positioning, personality and a 90-day activation plan.",
+      "includes": [
+        "5 parts: Foundation, Audience, Position, Personality, Activate",
+        "Brand Clarity Score self-assessment",
+        "One-page Brand Strategy summary",
+        "Three colour versions: Classic, Light & Dark",
+        "12-page customer guide (PDF) + printable PDFs"
+      ],
+      "specs": [
+        {
+          "label": "Pages",
+          "value": "31"
+        },
+        {
+          "label": "Colours",
+          "value": "3"
+        },
+        {
+          "label": "Works in",
+          "value": "Canva"
+        }
+      ],
+      "audience": "Freelancers and small business owners",
+      "price": "€16.00",
+      "image": "https://i.etsystatic.com/68286021/r/il/a18bd5/8680065187/il_794xN.8680065187_ldx6.jpg",
+      "gallery": [
+        "https://i.etsystatic.com/68286021/r/il/649e74/8632243536/il_794xN.8632243536_330g.jpg",
+        "https://i.etsystatic.com/68286021/r/il/a2f0bc/8632243510/il_794xN.8632243510_a539.jpg",
+        "https://i.etsystatic.com/68286021/r/il/72811e/8680065193/il_794xN.8680065193_hk4j.jpg",
+        "https://i.etsystatic.com/68286021/r/il/54591d/8680065201/il_794xN.8680065201_kq4c.jpg",
+        "https://i.etsystatic.com/68286021/r/il/7f1216/8632243538/il_794xN.8632243538_5ld6.jpg",
+        "https://i.etsystatic.com/68286021/r/il/5d47da/8632243560/il_794xN.8632243560_j9ot.jpg"
+      ],
+      "url": "https://www.etsy.com/listing/4589644567/brand-strategy-workbook-canva-brand",
+      "featured": true,
       "badge": "New"
+    },
+    {
+      "id": "brand-website-starter-bundle",
+      "name": "Brand & Website Starter Bundle",
+      "etsyTitle": "Brand & Website Starter Bundle | 3 Canva Templates for Freelancers (Digital Download)",
+      "category": "Bundles",
+      "tagline": "From brand strategy to finished website copy.",
+      "description": "Three coordinated Canva workbooks in one download: define your brand with the Brand Strategy Workbook, plan the site with the Website Blueprint Kit, then write every page with the Website Content Planner.",
+      "includes": [
+        "Brand Strategy Workbook, Website Blueprint Kit and Website Content Planner",
+        "3 × 31 pages (A4), each in Classic, Light & Dark — 9 editable templates",
+        "13-page customer guide with workflow examples",
+        "Printable PDFs in a ZIP file",
+        "Instant digital download"
+      ],
+      "specs": [
+        {
+          "label": "Workbooks",
+          "value": "3"
+        },
+        {
+          "label": "Templates",
+          "value": "9"
+        },
+        {
+          "label": "Works in",
+          "value": "Canva"
+        }
+      ],
+      "audience": "Freelancers and small business owners building a brand and website",
+      "price": "€37.99",
+      "image": "https://i.etsystatic.com/68286021/r/il/780a8b/8680242783/il_794xN.8680242783_hgri.jpg",
+      "gallery": [
+        "https://i.etsystatic.com/68286021/r/il/c30c6d/8632421576/il_794xN.8632421576_pzzg.jpg",
+        "https://i.etsystatic.com/68286021/r/il/70beb0/8680242803/il_794xN.8680242803_ln1i.jpg",
+        "https://i.etsystatic.com/68286021/r/il/2c3f5a/8632421584/il_794xN.8632421584_q7at.jpg",
+        "https://i.etsystatic.com/68286021/r/il/5132cf/8680242829/il_794xN.8680242829_icxh.jpg",
+        "https://i.etsystatic.com/68286021/r/il/c41325/8632421616/il_794xN.8632421616_nbiz.jpg"
+      ],
+      "url": "https://www.etsy.com/listing/4589679994/brand-website-starter-bundle-3-canva",
+      "featured": true,
+      "badge": "Bundle"
     }
   ]
 }
