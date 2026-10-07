@@ -1,0 +1,42 @@
+# Configurazione Netlify — sito statico, nessuna build necessaria.
+# A ogni pubblicazione Netlify esegue lo script che trasforma
+# content/products.json (modificato dal pannello /admin) in js/products.js.
+[build]
+  publish = "."
+  command = "node scripts/build.mjs"
+
+# Header di sicurezza per tutte le pagine
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# Cache: CSS/JS/immagini per 1 giorno con rivalidazione (i nomi dei file non
+# hanno hash, quindi niente cache "immutable" che bloccherebbe gli aggiornamenti).
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "public, max-age=86400, must-revalidate"
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, must-revalidate"
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+
+# Indirizzi "puliti" per i prodotti: /products/website-blueprint-kit
+[[redirects]]
+  from = "/products/:id"
+  to = "/product.html?p=:id"
+  status = 301
+
+# Il pannello non deve finire su Google
+[[headers]]
+  for = "/admin/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"

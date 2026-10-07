@@ -1,0 +1,99 @@
+# =============================================================================
+# Configurazione del pannello /admin (Decap CMS)
+# -----------------------------------------------------------------------------
+# UNICA RIGA DA CAMBIARE: "repo" → il tuo nome utente GitHub / nome repository
+# =============================================================================
+backend:
+  name: github
+  repo: TUO-UTENTE-GITHUB/velvetdigitallabb
+  branch: main
+  commit_messages:
+    update: "Aggiorna {{slug}} dal pannello"
+
+site_url: https://velvetdigitallabb.netlify.app
+display_url: https://velvetdigitallabb.netlify.app
+logo_url: /img/icon-192.png
+locale: it
+
+# Dove finiscono le immagini caricate dal pannello
+media_folder: img/products
+public_folder: img/products
+
+collections:
+  # ---------------------------------------------------------------- PRODOTTI
+  - name: catalogo
+    label: Catalogo
+    files:
+      - name: products
+        label: Prodotti
+        file: content/products.json
+        fields:
+          - label: Prodotti
+            name: products
+            widget: list
+            summary: "{{fields.name}} — {{fields.category}}"
+            label_singular: prodotto
+            fields:
+              - { label: "Nome breve", name: name, widget: string, hint: "Es. Website Blueprint Kit" }
+              - label: "ID (indirizzo della pagina)"
+                name: id
+                widget: string
+                pattern: ["^[a-z0-9]+(-[a-z0-9]+)*$", "Solo minuscole, numeri e trattini, es. brand-strategy-workbook"]
+                hint: "Diventa product.html?p=ID. Non cambiarlo dopo la pubblicazione."
+              - label: "Link Etsy"
+                name: url
+                widget: string
+                required: false
+                pattern: ["^(https://([\\w-]+\\.)?etsy\\.com/.*)?$", "Incolla il link completo dell'annuncio Etsy"]
+                hint: "Lascia vuoto se l'annuncio non è ancora online: il prodotto apparirà come 'Coming soon'."
+              - label: "Immagine principale"
+                name: image
+                widget: image
+                choose_url: true
+                hint: "Carica un file (JPG/WebP, circa 1200 px) oppure incolla il link di un'immagine Etsy."
+              - { label: "Categoria", name: category, widget: string, hint: "Le categorie diventano i filtri della collezione. Es. Website Planning, Copywriting, Branding" }
+              - { label: "Frase breve (tagline)", name: tagline, widget: string, required: false }
+              - { label: "Descrizione", name: description, widget: text }
+              - { label: "Prezzo", name: price, widget: string, required: false, hint: "Es. €17.90 — lascia vuoto per non mostrarlo" }
+              - { label: "In evidenza (sezione Featured)", name: featured, widget: boolean, default: false }
+              - { label: "Etichetta", name: badge, widget: string, required: false, hint: "Es. New, Flagship. Facoltativa." }
+              - label: "Cosa contiene"
+                name: includes
+                widget: list
+                required: false
+                field: { label: Voce, name: item, widget: string }
+              - label: "Scheda tecnica"
+                name: specs
+                widget: list
+                required: false
+                summary: "{{fields.label}}: {{fields.value}}"
+                fields:
+                  - { label: "Etichetta", name: label, widget: string, hint: "Es. Pages" }
+                  - { label: "Valore", name: value, widget: string, hint: "Es. 31" }
+              - { label: "Per chi è", name: audience, widget: string, required: false }
+              - { label: "Titolo completo Etsy (SEO)", name: etsyTitle, widget: string, required: false }
+              - label: "Galleria (immagini extra)"
+                name: gallery
+                widget: list
+                required: false
+                field: { label: Immagine, name: src, widget: image, choose_url: true }
+
+  # ---------------------------------------------------------- IMPOSTAZIONI
+  - name: impostazioni
+    label: Impostazioni
+    files:
+      - name: settings
+        label: Brand e social
+        file: content/settings.json
+        fields:
+          - { label: "Nome del brand", name: name, widget: string }
+          - { label: "Indirizzo del sito", name: url, widget: string }
+          - { label: "Link allo shop Etsy", name: shopUrl, widget: string }
+          - label: "Social"
+            name: social
+            widget: list
+            required: false
+            summary: "{{fields.label}}"
+            fields:
+              - { label: "Nome", name: label, widget: string, hint: "Es. Instagram" }
+              - { label: "Link", name: url, widget: string }

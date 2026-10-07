@@ -1,0 +1,585 @@
+/* =============================================================================
+   VelvetDigitalLabb — main.js
+   -----------------------------------------------------------------------------
+   JavaScript "vanilla" (senza librerie). Fa due lavori:
+     A. RENDER: legge il catalogo (js/products.js) e costruisce l'HTML di
+        hero, featured, collezione, filtri, footer e pagina prodotto.
+     B. INTERAZIONI: header, menu mobile, animazioni di reveal, parallax,
+        galleria, barra d'acquisto mobile.
+
+   Tutto è dentro una IIFE ( (() => { ... })() ): una funzione che si esegue
+   subito e crea uno "scope" privato, così le nostre variabili non finiscono
+   nell'oggetto globale window e non entrano in conflitto con altri script.
+   ========================================================================== */
+(() => {
+  "use strict";
+
+  /* ---------------------------------------------------------------------------
+     0. DATI E UTILITÀ
+     ------------------------------------------------------------------------ */
+  const SITE = window.VDL_SITE || { name: "VelvetDigitalLabb", url: "", shopUrl: "#", social: [] };
+  const PRODUCTS = (window.VDL_PRODUCTS || []).filter(Boolean);
+
+  // Rispetta la preferenza di sistema "riduci movimento".
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // "pointer: fine" = mouse/trackpad. Gli effetti al passaggio del mouse non
+  // hanno senso sugli schermi touch, quindi li attiviamo solo qui.
+  const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
+  // Escape dell'HTML: i testi del catalogo vengono inseriti con innerHTML,
+  // quindi neutralizziamo i caratteri speciali (<, >, &, ", ') per sicurezza
+  // e per evitare che un apostrofo rompa un attributo.
+  const esc = (s = "") =>
+    String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  // Controllo qualità del catalogo: avvisa in console se manca qualcosa.
+  const REQUIRED = ["id", "name", "description", "image"];
+  const ids = new Set();
+  PRODUCTS.forEach((p, i) => {
+    REQUIRED.forEach((k) => { if (!p[k]) console.warn(`[VDL] Prodotto #${i + 1}: manca il campo "${k}"`); });
+    if (ids.has(p.id)) console.warn(`[VDL] id duplicato: "${p.id}" — ogni prodotto deve avere un id unico.`);
+    ids.add(p.id);
+    if (!p.url) console.info(`[VDL] "${p.name}" non ha un link Etsy: verrà mostrato come "Coming soon".`);
+  });
+
+  const isLive = (p) => typeof p.url === "string" && /^https:\/\//.test(p.url);
+  const productPage = (p) => `product.html?p=${encodeURIComponent(p.id)}`;
+  const featured = PRODUCTS.filter((p) => p.featured);
+
+  // Attributi standard dei link esterni verso Etsy (nuova scheda, sicuri).
+  const EXT = 'target="_blank" rel="noopener noreferrer"';
+  const NEW_TAB = '<span class="visually-hidden">(opens Etsy in a new tab)</span>';
+  const ARROW =
+    '<svg class="arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>';
+
+  /* Immagini responsive.
+     Le immagini Etsy esistono in più dimensioni: basta cambiare il pezzo
+     "il_794xN" dell'URL in "il_570xN" o "il_1140xN". Costruiamo quindi uno
+     srcset: il browser sceglie da solo la più leggera adatta allo schermo. */
+  const ETSY_SIZE = /il_(\d+xN|fullxfull)/;
+  function img(src, { alt = "", sizes = "100vw", eager = false, cls = "" } = {}) {
+    if (!src) return "";
+    let srcset = "";
+    if (ETSY_SIZE.test(src)) {
+      srcset = [570, 794, 1140].map((w) => `${src.replace(ETSY_SIZE, `il_${w}xN`)} ${w}w`).join(", ");
+    }
+    return `<img src="${esc(src)}"${srcset ? ` srcset="${esc(srcset)}" sizes="${sizes}"` : ""} alt="${esc(alt)}" width="794" height="794" ${
+      eager ? 'fetchpriority="high"' : 'loading="lazy"'
+    } decoding="async"${cls ? ` class="${cls}"` : ""}>`;
+  }
+
+  // Link principale di un prodotto: Etsy se c'è l'URL, altrimenti nessun link.
+  const etsyHref = (p) => (isLive(p) ? `href="${esc(p.url)}" ${EXT}` : "");
+
+  /* ---------------------------------------------------------------------------
+     A1. HERO — copertine sovrapposte
+     ------------------------------------------------------------------------ */
+  function renderHeroStage() {
+    const stage = $("[data-hero-stage]");
+    if (!stage) return;
+    const [front, back] = (featured.length ? featured : PRODUCTS).slice(0, 2);
+    const cover = (p, cls, factor, eager) =>
+      !p
+        ? ""
+        : `<figure class="cover ${cls}" data-parallax="${factor}" data-drift="${cls === "cover--front" ? 14 : -10}">
+            ${isLive(p) ? `<a ${etsyHref(p)} aria-label="${esc(p.name)} on Etsy (opens in a new tab)">` : ""}
+              ${img(p.image, { alt: `${p.name} — cover`, sizes: "(max-width: 900px) 58vw, 380px", eager })}
+            ${isLive(p) ? "</a>" : ""}
+          </figure>`;
+    stage.insertAdjacentHTML(
+      "beforeend",
+      cover(back, "cover--back", "-0.06", false) +
+        cover(front, "cover--front", "0.05", true) +
+        `<span class="chip chip--a" data-parallax="-0.1">Made for <b>Canva</b></span>
+         <span class="chip chip--b" data-parallax="0.08"><b>3</b> editions · Classic, Light, Dark</span>`
+    );
+  }
+
+  /* ---------------------------------------------------------------------------
+     A2. FEATURED — righe editoriali grandi, alternate
+     ------------------------------------------------------------------------ */
+  const specsHTML = (p) =>
+    p.specs && p.specs.length
+      ? `<dl class="specs">${p.specs.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>`
+      : "";
+  const includesHTML = (p) =>
+    p.includes && p.includes.length ? `<ul class="includes">${p.includes.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>` : "";
+  const priceHTML = (p) => (p.price ? `<p class="price">${esc(p.price)}<small>Price on Etsy</small></p>` : "");
+
+  function renderFeatured() {
+    const root = $("[data-featured]");
+    if (!root) return;
+    root.innerHTML = featured
+      .map((p, i) => {
+        const hover = p.gallery && p.gallery[0];
+        return `
+        <article class="feature" aria-labelledby="f-${esc(p.id)}">
+          <div class="feature__media" data-reveal="mask">
+            <span class="feature__num" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span>
+            <a class="frame" ${isLive(p) ? etsyHref(p) : `href="${productPage(p)}"`} data-tilt tabindex="-1" aria-hidden="true">
+              ${img(p.image, { alt: "", sizes: "(max-width: 900px) 100vw, 58vw" })}
+              ${hover ? img(hover, { alt: "", sizes: "(max-width: 900px) 100vw, 58vw" }) : ""}
+              ${p.badge ? `<span class="badge">${esc(p.badge)}</span>` : ""}
+            </a>
+          </div>
+          <div class="feature__body">
+            <p class="eyebrow feature__cat" data-reveal>${esc(p.category || "")}</p>
+            <h3 class="feature__name" id="f-${esc(p.id)}" data-reveal style="--d:.05s">${esc(p.name)}</h3>
+            ${p.tagline ? `<p class="feature__tag" data-reveal style="--d:.1s">${esc(p.tagline)}</p>` : ""}
+            <p class="feature__desc" data-reveal style="--d:.15s">${esc(p.description)}</p>
+            <div data-reveal style="--d:.2s">${specsHTML(p)}${includesHTML(p)}</div>
+            <div class="buy" data-reveal style="--d:.25s">
+              ${priceHTML(p)}
+              ${
+                isLive(p)
+                  ? `<a class="btn btn--dark" ${etsyHref(p)}>Buy on Etsy ${ARROW}${NEW_TAB}</a>`
+                  : `<span class="btn btn--line" aria-disabled="true">Coming soon</span>`
+              }
+              <a class="link-underline" href="${productPage(p)}">View details</a>
+            </div>
+          </div>
+        </article>`;
+      })
+      .join("");
+    // Se non c'è nessun prodotto "featured" nascondiamo la sezione intera.
+    if (!featured.length) $("#featured")?.setAttribute("hidden", "");
+  }
+
+  /* ---------------------------------------------------------------------------
+     A3. COLLECTION — griglia + filtri per categoria
+     ------------------------------------------------------------------------ */
+  function cardHTML(p, i) {
+    const hover = p.gallery && p.gallery[0];
+    return `
+      <article class="card" data-cat="${esc(p.category || "")}" data-reveal style="--d:${(i % 3) * 0.08}s">
+        <div class="frame">
+          ${img(p.image, { alt: p.etsyTitle || p.name, sizes: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" })}
+          ${hover ? img(hover, { alt: "", sizes: "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" }) : ""}
+          ${p.badge ? `<span class="badge">${esc(p.badge)}</span>` : ""}
+        </div>
+        <div class="card__body">
+          <p class="card__cat">${esc(p.category || "")}</p>
+          <h3 class="card__name">${
+            isLive(p) ? `<a ${etsyHref(p)}>${esc(p.name)}${NEW_TAB}</a>` : esc(p.name)
+          }</h3>
+          <p class="card__desc">${esc(p.tagline || p.description)}</p>
+          <div class="card__foot">
+            <span class="card__price">${esc(p.price || "")}</span>
+            ${
+              isLive(p)
+                ? `<span class="card__cta" aria-hidden="true">View on Etsy ${ARROW}</span>`
+                : `<span class="card__cta">Coming soon</span>`
+            }
+          </div>
+          <a class="card__details link-underline" href="${productPage(p)}">Details<span class="visually-hidden"> about ${esc(p.name)}</span></a>
+        </div>
+      </article>`;
+  }
+
+  // Card finale onesta: invita a seguire lo shop, senza prodotti inventati.
+  const soonCard = () => `
+      <article class="card card--soon" data-reveal data-always>
+        <div class="card__body">
+          <p class="card__cat">In the studio</p>
+          <h3 class="card__name">More tools are on the way.</h3>
+          <p class="card__desc">New releases land on Etsy first. Favourite the shop to hear about them.</p>
+          <a class="btn btn--line btn--small" href="${esc(SITE.shopUrl)}" ${EXT}>Follow on Etsy ${ARROW}${NEW_TAB}</a>
+        </div>
+      </article>`;
+
+  function renderCollection() {
+    const grid = $("[data-grid]");
+    const filtersEl = $("[data-filters]");
+    if (!grid) return;
+    grid.innerHTML = PRODUCTS.map(cardHTML).join("") + soonCard();
+
+    // Le categorie si ricavano dai prodotti: nuove categorie = nuovi filtri,
+    // in automatico. new Set() elimina i duplicati.
+    const cats = [...new Set(PRODUCTS.map((p) => p.category).filter(Boolean))];
+    if (!filtersEl) return;
+    if (cats.length < 2) { filtersEl.hidden = true; return; } // un solo filtro non serve
+
+    filtersEl.innerHTML =
+      ["All", ...cats].map((c, i) => `<button class="filter" type="button" aria-pressed="${i === 0}" data-filter="${esc(c)}">${esc(c)}</button>`).join("") +
+      `<span class="filters__count" data-count></span>`;
+
+    const count = $("[data-count]", filtersEl);
+    const apply = (cat) => {
+      let n = 0;
+      $$(".card", grid).forEach((card) => {
+        if (card.hasAttribute("data-always")) return;
+        const show = cat === "All" || card.dataset.cat === cat;
+        card.hidden = !show;
+        if (show) n++;
+      });
+      count.textContent = `${n} product${n === 1 ? "" : "s"}`;
+    };
+    // "Event delegation": un solo listener sul contenitore invece di uno per
+    // bottone. L'evento "risale" (bubbling) dal bottone cliccato fino a qui.
+    filtersEl.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-filter]");
+      if (!btn) return;
+      $$("[data-filter]", filtersEl).forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+      apply(btn.dataset.filter);
+    });
+    apply("All");
+  }
+
+  /* ---------------------------------------------------------------------------
+     A4. FOOTER + link allo shop + anno
+     ------------------------------------------------------------------------ */
+  function renderFooter() {
+    $$("[data-shop-link]").forEach((a) => (a.href = SITE.shopUrl));
+    const list = $("[data-footer-products]");
+    if (list) {
+      list.insertAdjacentHTML(
+        "afterbegin",
+        PRODUCTS.filter(isLive).map((p) => `<li><a href="${productPage(p)}">${esc(p.name)}</a></li>`).join("")
+      );
+    }
+    const social = $("[data-footer-social]");
+    if (social && SITE.social && SITE.social.length) {
+      $("ul", social).innerHTML = SITE.social.map((s) => `<li><a href="${esc(s.url)}" ${EXT}>${esc(s.label)} ↗</a></li>`).join("");
+      social.hidden = false;
+    }
+    $$("[data-year]").forEach((el) => (el.textContent = new Date().getFullYear()));
+  }
+
+  /* ---------------------------------------------------------------------------
+     A5. SEO — dati strutturati dei prodotti (Schema.org Product)
+     Google legge anche il JSON-LD aggiunto via JavaScript.
+     ------------------------------------------------------------------------ */
+  function productLD(p) {
+    const ld = {
+      "@type": "Product",
+      name: p.etsyTitle || p.name,
+      description: p.description,
+      image: p.image,
+      brand: { "@type": "Brand", name: SITE.name },
+      category: p.category,
+      url: `${SITE.url}/${productPage(p)}`
+    };
+    // L'offerta (prezzo) solo se abbiamo prezzo e link reali: niente dati inventati.
+    const num = p.price && parseFloat(p.price.replace(/[^\d.,]/g, "").replace(",", "."));
+    if (isLive(p) && num) {
+      ld.offers = { "@type": "Offer", price: num.toFixed(2), priceCurrency: /€/.test(p.price) ? "EUR" : "USD", availability: "https://schema.org/InStock", url: p.url };
+    }
+    return ld;
+  }
+  function injectLD(data) {
+    const s = document.createElement("script");
+    s.type = "application/ld+json";
+    s.textContent = JSON.stringify({ "@context": "https://schema.org", ...data });
+    document.head.appendChild(s);
+  }
+
+  /* ---------------------------------------------------------------------------
+     A6. PAGINA PRODOTTO (product.html?p=id)
+     ------------------------------------------------------------------------ */
+  function renderProductPage(root) {
+    // URLSearchParams legge i parametri dopo il "?" dell'indirizzo.
+    const id = new URLSearchParams(location.search).get("p");
+    const p = PRODUCTS.find((x) => x.id === id);
+
+    if (!p) {
+      document.title = `Product not found — ${SITE.name}`;
+      root.innerHTML = `
+        <section class="notfound velvet"><div class="container">
+          <p class="eyebrow" style="justify-content:center">404</p>
+          <h1>This product isn't here.</h1>
+          <p>It may have moved. Browse the collection or visit the Etsy shop.</p>
+          <a class="btn" href="./#collection">Back to the collection</a>
+        </div></section>`;
+      return;
+    }
+
+    // Meta tag dinamici: titolo, descrizione, canonical, Open Graph.
+    const pageUrl = `${SITE.url}/${productPage(p)}`;
+    document.title = `${p.name} — Canva Workbook | ${SITE.name}`;
+    $('meta[name="description"]')?.setAttribute("content", `${p.tagline || ""} ${p.description}`.trim().slice(0, 158));
+    $('link[rel="canonical"]')?.setAttribute("href", pageUrl);
+    $('meta[property="og:title"]')?.setAttribute("content", `${p.name} — ${SITE.name}`);
+    $('meta[property="og:description"]')?.setAttribute("content", p.description);
+    $('meta[property="og:url"]')?.setAttribute("content", pageUrl);
+    $('meta[property="og:image"]')?.setAttribute("content", p.image);
+
+    const images = [p.image, ...(p.gallery || [])];
+    const others = PRODUCTS.filter((x) => x.id !== p.id);
+
+    root.innerHTML = `
+      <section class="p-hero velvet" aria-labelledby="p-title">
+        <div class="container">
+          <nav aria-label="Breadcrumb"><ol class="crumbs">
+            <li><a href="./">Home</a></li><li><a href="./#collection">Collection</a></li><li aria-current="page">${esc(p.name)}</li>
+          </ol></nav>
+          <div class="p-grid">
+            <div class="gallery" data-reveal>
+              <div class="gallery__main">${img(images[0], { alt: p.etsyTitle || p.name, sizes: "(max-width: 900px) 100vw, 55vw", eager: true })}</div>
+              ${
+                images.length > 1
+                  ? `<ul class="gallery__thumbs" aria-label="Product images">${images
+                      .map(
+                        (src, i) =>
+                          `<li><button type="button" aria-pressed="${i === 0}" data-src="${esc(src)}" aria-label="Show image ${i + 1} of ${images.length}">${img(src, { alt: "", sizes: "80px" })}</button></li>`
+                      )
+                      .join("")}</ul>`
+                  : ""
+              }
+            </div>
+            <div class="p-info">
+              <p class="eyebrow" data-hero>${esc(p.category || "")}</p>
+              <h1 id="p-title" data-hero style="--d:.1s">${esc(p.name)}</h1>
+              ${p.tagline ? `<p class="tag" data-hero style="--d:.15s">${esc(p.tagline)}</p>` : ""}
+              <p class="desc" data-hero style="--d:.2s">${esc(p.description)}</p>
+              ${p.audience ? `<p class="audience" data-hero style="--d:.22s"><b>Made for:</b> ${esc(p.audience)}</p>` : ""}
+              <div data-hero style="--d:.25s">${specsHTML(p)}${includesHTML(p)}</div>
+              <div class="buy" data-hero style="--d:.3s" data-main-buy>
+                ${priceHTML(p)}
+                ${
+                  isLive(p)
+                    ? `<a class="btn" ${etsyHref(p)}>Buy on Etsy ${ARROW}${NEW_TAB}</a>`
+                    : `<span class="btn btn--ghost" aria-disabled="true">Coming soon</span>`
+                }
+              </div>
+              <p class="note" data-hero style="--d:.35s">Digital download — no physical item is shipped. Checkout, payment and file delivery are handled securely by Etsy.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      ${
+        others.length
+          ? `<section class="section collection" aria-labelledby="more-title"><div class="container">
+              <header class="section__head"><div>
+                <p class="eyebrow" data-reveal>Pairs well with</p>
+                <h2 class="section__title" id="more-title" data-reveal style="--d:.1s">More from the <em>studio</em>.</h2>
+              </div></header>
+              <div class="grid">${others.map(cardHTML).join("")}</div>
+            </div></section>`
+          : ""
+      }
+      ${
+        isLive(p)
+          ? `<div class="buybar" data-buybar aria-hidden="true">
+              <p class="buybar__name">${esc(p.name)}${p.price ? `<small>${esc(p.price)}</small>` : ""}</p>
+              <a class="btn btn--small" ${etsyHref(p)} tabindex="-1">Buy on Etsy ${ARROW}</a>
+            </div>`
+          : ""
+      }`;
+
+    document.body.classList.toggle("has-buybar", isLive(p));
+    injectLD({ ...productLD(p), "@id": pageUrl });
+    initGallery(root);
+    initBuybar(root);
+  }
+
+  function initGallery(root) {
+    const thumbs = $$(".gallery__thumbs button", root);
+    thumbs.forEach((btn) =>
+      btn.addEventListener("click", () => {
+        const src = btn.dataset.src;
+        const main = $(".gallery__main img", root); // sempre l'immagine attuale
+        thumbs.forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+        // Piccola dissolvenza: abbasso l'opacità, cambio immagine al caricamento.
+        main.style.opacity = ".2";
+        const tmp = document.createElement("div");
+        tmp.innerHTML = img(src, { alt: main.alt, sizes: main.sizes });
+        const next = tmp.firstElementChild;
+        next.addEventListener("load", () => requestAnimationFrame(() => (next.style.opacity = "1")), { once: true });
+        next.style.opacity = ".2";
+        main.replaceWith(next);
+      })
+    );
+  }
+
+  // Mostra la barra "Buy on Etsy" in basso solo quando il bottone principale
+  // non è più visibile. IntersectionObserver = "avvisami quando un elemento
+  // entra o esce dallo schermo", senza calcoli ad ogni scroll.
+  function initBuybar(root) {
+    const bar = $("[data-buybar]", root);
+    const target = $("[data-main-buy]", root);
+    if (!bar || !target) return;
+    new IntersectionObserver(([entry]) => {
+      const show = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+      bar.classList.toggle("is-visible", show);
+      bar.setAttribute("aria-hidden", String(!show));
+      $("a", bar).tabIndex = show ? 0 : -1;
+    }).observe(target);
+  }
+
+  /* ---------------------------------------------------------------------------
+     B1. HEADER — sfondo allo scroll, si nasconde scendendo
+     ------------------------------------------------------------------------ */
+  function initHeader() {
+    const header = $("[data-header]");
+    if (!header) return;
+    let lastY = window.scrollY;
+    let ticking = false;
+    const update = () => {
+      const y = window.scrollY;
+      header.classList.toggle("is-scrolled", y > 24);
+      const goingDown = y > lastY;
+      const menuOpen = document.body.classList.contains("menu-open");
+      header.classList.toggle("is-hidden", goingDown && y > 480 && !menuOpen);
+      lastY = y;
+      ticking = false;
+    };
+    // requestAnimationFrame: aggiorniamo al massimo una volta per fotogramma,
+    // anche se l'evento scroll scatta decine di volte.
+    window.addEventListener("scroll", () => { if (!ticking) { requestAnimationFrame(update); ticking = true; } }, { passive: true });
+    update();
+    // Se l'header ha il focus da tastiera, deve essere visibile.
+    header.addEventListener("focusin", () => header.classList.remove("is-hidden"));
+  }
+
+  /* ---------------------------------------------------------------------------
+     B2. MENU MOBILE — accessibile: aria-expanded, Esc, focus intrappolato
+     ------------------------------------------------------------------------ */
+  function initMenu() {
+    const toggle = $("[data-menu-toggle]");
+    const menu = $("[data-menu]");
+    if (!toggle || !menu) return;
+    const label = $("[data-menu-label]", toggle);
+
+    const setOpen = (open) => {
+      toggle.setAttribute("aria-expanded", String(open));
+      label.textContent = open ? "Close" : "Menu";
+      menu.classList.toggle("is-open", open);
+      document.body.classList.toggle("menu-open", open);
+      if (open) setTimeout(() => $("a", menu)?.focus(), 150);
+    };
+    toggle.addEventListener("click", () => setOpen(toggle.getAttribute("aria-expanded") !== "true"));
+    menu.addEventListener("click", (e) => { if (e.target.closest("a")) setOpen(false); });
+    document.addEventListener("keydown", (e) => {
+      if (!menu.classList.contains("is-open")) return;
+      if (e.key === "Escape") { setOpen(false); toggle.focus(); }
+      // Focus trap: con Tab si gira solo tra il bottone e i link del menu.
+      if (e.key === "Tab") {
+        const items = [toggle, ...$$("a", menu)];
+        const i = items.indexOf(document.activeElement);
+        if (e.shiftKey && i <= 0) { e.preventDefault(); items[items.length - 1].focus(); }
+        else if (!e.shiftKey && i === items.length - 1) { e.preventDefault(); items[0].focus(); }
+      }
+    });
+    window.matchMedia("(min-width: 901px)").addEventListener("change", (e) => e.matches && setOpen(false));
+  }
+
+  /* ---------------------------------------------------------------------------
+     B3. SCROLL-SPY — evidenzia nel menu la sezione che stai guardando
+     ------------------------------------------------------------------------ */
+  function initSpy() {
+    const links = $$("[data-spy]");
+    if (!links.length) return;
+    const map = new Map(links.map((a) => [a.getAttribute("href").replace("./", ""), a]));
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        links.forEach((a) => a.removeAttribute("aria-current"));
+        map.get(`#${en.target.id}`)?.setAttribute("aria-current", "true");
+      }),
+      { rootMargin: "-45% 0px -50% 0px" } // "attiva" quando la sezione passa a metà schermo
+    );
+    map.forEach((_, id) => { const s = $(id); if (s) io.observe(s); });
+  }
+
+  /* ---------------------------------------------------------------------------
+     B4. REVEAL — gli elementi entrano quando arrivano nello schermo
+     ------------------------------------------------------------------------ */
+  function initReveal() {
+    const els = $$("[data-reveal]");
+    if (reduceMotion || !("IntersectionObserver" in window)) { els.forEach((el) => el.classList.add("is-in")); return; }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((en) => {
+        if (en.isIntersecting) { en.target.classList.add("is-in"); io.unobserve(en.target); } // una volta sola
+      }),
+      { threshold: 0.12, rootMargin: "0px 0px -6% 0px" }
+    );
+    els.forEach((el) => io.observe(el));
+  }
+
+  // Animazione d'ingresso dell'hero: parte quando i font sono pronti (o al
+  // massimo dopo 700 ms), così il titolo non "salta" cambiando font.
+  function initIntro() {
+    const go = () => $$(".hero, .p-hero").forEach((h) => h.classList.add("is-loaded"));
+    if (reduceMotion) return go();
+    const timeout = new Promise((r) => setTimeout(r, 700));
+    Promise.race([document.fonts ? document.fonts.ready : timeout, timeout]).then(() => requestAnimationFrame(go));
+  }
+
+  /* ---------------------------------------------------------------------------
+     B5. PARALLAX + DERIVA AL MOUSE
+     data-parallax="0.05" → l'elemento si sposta del 5% della sua distanza
+     dal centro dello schermo. Solo transform: niente ricalcolo del layout.
+     ------------------------------------------------------------------------ */
+  function initMotion() {
+    if (reduceMotion) return;
+    const items = $$("[data-parallax]").map((el) => ({ el, f: parseFloat(el.dataset.parallax) || 0, drift: parseFloat(el.dataset.drift) || 0, mx: 0, my: 0 }));
+    if (!items.length) return;
+    let raf = 0;
+    const vh = () => window.innerHeight;
+    const render = () => {
+      raf = 0;
+      items.forEach((it) => {
+        const r = it.el.getBoundingClientRect();
+        if (r.bottom < -200 || r.top > vh() + 200) return; // fuori schermo: salta
+        const y = (r.top + r.height / 2 - vh() / 2) * it.f;
+        it.el.style.transform = `translate3d(${it.mx.toFixed(1)}px, ${(y + it.my).toFixed(1)}px, 0)`;
+      });
+    };
+    const request = () => { if (!raf) raf = requestAnimationFrame(render); };
+    window.addEventListener("scroll", request, { passive: true });
+    window.addEventListener("resize", request);
+    render();
+
+    // Deriva al movimento del mouse nell'hero (solo con mouse).
+    const hero = $("[data-hero-section]");
+    if (hero && finePointer) {
+      hero.addEventListener("pointermove", (e) => {
+        const nx = e.clientX / window.innerWidth - 0.5; // da -0.5 a 0.5
+        const ny = e.clientY / window.innerHeight - 0.5;
+        items.forEach((it) => { if (it.drift) { it.mx = nx * it.drift; it.my = ny * it.drift; } });
+        request();
+      });
+      hero.addEventListener("pointerleave", () => { items.forEach((it) => { it.mx = it.my = 0; }); request(); });
+    }
+  }
+
+  /* ---------------------------------------------------------------------------
+     B6. TILT — leggera inclinazione 3D delle immagini featured al passaggio
+     ------------------------------------------------------------------------ */
+  function initTilt() {
+    if (reduceMotion || !finePointer) return;
+    $$("[data-tilt]").forEach((el) => {
+      el.addEventListener("pointermove", (e) => {
+        const r = el.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        el.style.transform = `perspective(1200px) rotateY(${x * 4}deg) rotateX(${-y * 4}deg)`;
+      });
+      el.addEventListener("pointerleave", () => (el.style.transform = ""));
+    });
+  }
+
+  /* ---------------------------------------------------------------------------
+     AVVIO
+     ------------------------------------------------------------------------ */
+  const productRoot = $("[data-product-root]");
+  if (productRoot) {
+    renderProductPage(productRoot);
+  } else {
+    renderHeroStage();
+    renderFeatured();
+    renderCollection();
+    if (PRODUCTS.length) injectLD({ "@type": "ItemList", itemListElement: PRODUCTS.map((p, i) => ({ "@type": "ListItem", position: i + 1, item: productLD(p) })) });
+  }
+  renderFooter();
+  initHeader();
+  initMenu();
+  initSpy();
+  initReveal();
+  initIntro();
+  initMotion();
+  initTilt();
+})();
