@@ -72,31 +72,127 @@
     } decoding="async"${cls ? ` class="${cls}"` : ""}>`;
   }
 
+  // Sfondo sfocato dei riquadri foto (.mat): la stessa foto, versione piccola.
+  const matBg = (src) => (src ? ` style="--bg:url('${esc(ETSY_SIZE.test(src) ? src.replace(ETSY_SIZE, "il_570xN") : src)}')"` : "");
+
   // Link principale di un prodotto: Etsy se c'è l'URL, altrimenti nessun link.
   const etsyHref = (p) => (isLive(p) ? `href="${esc(p.url)}" ${EXT}` : "");
 
   /* ---------------------------------------------------------------------------
-     A1. HERO — copertine sovrapposte
+     A1. HERO — vetrina "bento": una griglia ordinata di 3 riquadri.
+     Riquadro grande = il bundle (o il primo prodotto in evidenza), due
+     riquadri piccoli = le ultime novità. Tutto allineato, niente oggetti
+     sparsi: l'ordine comunica professionalità.
      ------------------------------------------------------------------------ */
-  function renderHeroStage() {
-    const stage = $("[data-hero-stage]");
-    if (!stage) return;
-    const [front, back] = (featured.length ? featured : PRODUCTS).slice(0, 2);
-    const cover = (p, cls, factor, eager) =>
-      !p
-        ? ""
-        : `<figure class="cover ${cls}" data-parallax="${factor}" data-drift="${cls === "cover--front" ? 14 : -10}">
-            ${isLive(p) ? `<a ${etsyHref(p)} aria-label="${esc(p.name)} on Etsy (opens in a new tab)">` : ""}
-              ${img(p.image, { alt: `${p.name} — cover`, sizes: "(max-width: 900px) 58vw, 380px", eager })}
-            ${isLive(p) ? "</a>" : ""}
-          </figure>`;
-    stage.insertAdjacentHTML(
-      "beforeend",
-      cover(back, "cover--back", "-0.06", false) +
-        cover(front, "cover--front", "0.05", true) +
-        `<span class="chip chip--a" data-parallax="-0.1">Made for <b>Canva</b></span>
-         <span class="chip chip--b" data-parallax="0.08"><b>3</b> editions · Classic, Light, Dark</span>`
-    );
+  const pickHero = () => {
+    const pool = featured.length ? featured : [...PRODUCTS].reverse();
+    const big = pool.find((p) => p.category === "Bundles") || pool[0];
+    return [big, ...pool.filter((p) => p !== big)].filter(Boolean).slice(0, 3);
+  };
+
+  function tileHTML(p, cls, sizes, eager) {
+    return `
+      <a class="tile ${cls}" href="${productPage(p)}">
+        ${img(p.image, { alt: p.etsyTitle || p.name, sizes, eager })}
+        <span class="tile__bar">
+          <span><small>${esc(p.category || "")}</small><b>${esc(p.name)}</b></span>
+          ${p.price ? `<em>${esc(p.price)}</em>` : ""}
+        </span>
+      </a>`;
+  }
+
+  function renderBento() {
+    const el = $("[data-bento]");
+    if (!el) return;
+    const [big, a, b] = pickHero();
+    if (!big) return el.setAttribute("hidden", "");
+    el.innerHTML =
+      tileHTML(big, "tile--big", "(max-width: 900px) 92vw, 340px", true) +
+      (a ? tileHTML(a, "", "(max-width: 900px) 45vw, 220px") : "") +
+      (b ? tileHTML(b, "", "(max-width: 900px) 45vw, 220px") : "");
+  }
+
+  let setCatalogFilter = null; // lo imposta renderCollection (filtra il catalogo da fuori)
+
+  /* ---------------------------------------------------------------------------
+     A1e. SPOTLIGHT — una fascia elegante che mette in evidenza il bundle
+     (o il primo prodotto in evidenza): immagine, cosa contiene, prezzo, CTA.
+     ------------------------------------------------------------------------ */
+  function renderSpotlight() {
+    const el = $("[data-spotlight]");
+    if (!el) return;
+    const p = PRODUCTS.find((x) => x.category === "Bundles") || featured[0];
+    if (!p) return el.closest("section")?.setAttribute("hidden", "");
+    el.innerHTML = `
+      <div class="spot__media">${img(p.image, { alt: p.etsyTitle || p.name, sizes: "(max-width: 900px) 92vw, 520px" })}</div>
+      <div class="spot__body">
+        <p class="eyebrow">${p.category === "Bundles" ? "Best value" : "Spotlight"}</p>
+        <h2 class="spot__title">${esc(p.name)}</h2>
+        ${p.tagline ? `<p class="spot__tag">${esc(p.tagline)}</p>` : ""}
+        ${includesHTML(p)}
+        <div class="spot__buy">
+          ${p.price ? `<span class="spot__price">${esc(p.price)}</span>` : ""}
+          ${isLive(p) ? `<a class="btn" ${etsyHref(p)}>Buy on Etsy ${ARROW}${NEW_TAB}</a>` : ""}
+          <a class="link-underline" href="${productPage(p)}" data-quickview="${esc(p.id)}">Quick view</a>
+        </div>
+      </div>`;
+  }
+
+  /* ---------------------------------------------------------------------------
+     A1c. QUICK VIEW — anteprima del prodotto in una finestra (<dialog>),
+     senza lasciare la pagina. Il link resta un link vero: con Cmd/Ctrl+clic
+     o senza JS apre la pagina prodotto completa.
+     ------------------------------------------------------------------------ */
+  function initQuickView() {
+    if (!("HTMLDialogElement" in window)) return;
+    const dlg = document.createElement("dialog");
+    dlg.className = "qv";
+    dlg.setAttribute("aria-labelledby", "qv-title");
+    document.body.appendChild(dlg);
+
+    const open = (p) => {
+      const images = [p.image, ...(p.gallery || [])].slice(0, 6);
+      dlg.innerHTML = `
+        <button class="qv__close" type="button" aria-label="Close" data-qv-close>×</button>
+        <div class="qv__grid">
+          <div class="qv__media">
+            <div class="qv__main mat"${matBg(images[0])}>${img(images[0], { alt: p.etsyTitle || p.name, sizes: "(max-width: 760px) 90vw, 420px", eager: true })}</div>
+            ${images.length > 1 ? `<div class="qv__thumbs">${images.map((src, i) => `<button type="button" aria-label="Image ${i + 1}" aria-pressed="${i === 0}" data-src="${esc(src)}">${img(src, { alt: "", sizes: "64px" })}</button>`).join("")}</div>` : ""}
+          </div>
+          <div class="qv__info">
+            <p class="eyebrow">${esc(p.category || "")}</p>
+            <h2 id="qv-title">${esc(p.name)}</h2>
+            ${p.tagline ? `<p class="qv__tag">${esc(p.tagline)}</p>` : ""}
+            <p class="qv__desc">${esc(p.description)}</p>
+            ${includesHTML(p)}
+            <div class="qv__buy">
+              ${p.price ? `<span class="rec__price">${esc(p.price)}</span>` : ""}
+              ${isLive(p) ? `<a class="btn btn--dark" ${etsyHref(p)}>Buy on Etsy ${ARROW}${NEW_TAB}</a>` : ""}
+              <a class="link-underline" href="${productPage(p)}">Full details</a>
+            </div>
+          </div>
+        </div>`;
+      dlg.showModal();
+      document.body.classList.add("qv-open");
+    };
+    dlg.addEventListener("close", () => document.body.classList.remove("qv-open"));
+    dlg.addEventListener("click", (e) => {
+      if (e.target === dlg || e.target.closest("[data-qv-close]")) return dlg.close(); // clic fuori o sulla X
+      const t = e.target.closest(".qv__thumbs button");
+      if (!t) return;
+      $$(".qv__thumbs button", dlg).forEach((b) => b.setAttribute("aria-pressed", String(b === t)));
+      $(".qv__main", dlg).style.setProperty("--bg", `url('${t.dataset.src.replace(ETSY_SIZE, "il_570xN")}')`);
+      $(".qv__main", dlg).innerHTML = img(t.dataset.src, { alt: "", sizes: "(max-width: 760px) 90vw, 420px", eager: true });
+    });
+    // Delegazione: funziona anche per le card aggiunte dopo con "Load more".
+    document.addEventListener("click", (e) => {
+      const a = e.target.closest("[data-quickview]");
+      if (!a || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+      const p = PRODUCTS.find((x) => x.id === a.dataset.quickview);
+      if (!p) return;
+      e.preventDefault();
+      open(p);
+    });
   }
 
   /* ---------------------------------------------------------------------------
@@ -117,19 +213,17 @@
     const hover = p.gallery && p.gallery[0];
     return `
       <li class="pcard" style="--i:${i % 12}">
-        <div class="pcard__media">
+        <div class="pcard__media mat"${matBg(p.image)}>
           ${img(p.image, { alt: p.etsyTitle || p.name, sizes: CARD_SIZES })}
           ${hover ? img(hover, { alt: "", sizes: CARD_SIZES }) : ""}
           ${p.badge ? `<span class="pcard__badge">${esc(p.badge)}</span>` : ""}
         </div>
         <div class="pcard__body">
           <p class="pcard__cat">${esc(p.category || "")}</p>
-          <h3 class="pcard__name">${
-            isLive(p) ? `<a ${etsyHref(p)}>${esc(p.name)}${NEW_TAB}</a>` : `<a href="${productPage(p)}">${esc(p.name)}</a>`
-          }</h3>
+          <h3 class="pcard__name"><a href="${productPage(p)}">${esc(p.name)}</a></h3>
           <div class="pcard__foot">
             <span class="pcard__price">${isLive(p) ? esc(p.price || "") : "Coming soon"}</span>
-            <a class="pcard__more" href="${productPage(p)}">Details<span class="visually-hidden"> about ${esc(p.name)}</span></a>
+            <a class="pcard__more" href="${productPage(p)}" data-quickview="${esc(p.id)}">Quick view<span class="visually-hidden"> of ${esc(p.name)}</span></a>
           </div>
         </div>
       </li>`;
@@ -260,6 +354,12 @@
       // Accessibilità: il focus va sulla prima card appena aggiunta.
       grid.children[before]?.querySelector("a")?.focus({ preventScroll: true });
     });
+    setCatalogFilter = (cat) => {
+      state.cat = cats.includes(cat) ? cat : "All";
+      state.q = ""; searchEl.value = ""; state.shown = PAGE;
+      $$("[data-cat]", chipsEl).forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.cat === state.cat)));
+      render();
+    };
     $("[data-reset]")?.addEventListener("click", () => {
       Object.assign(state, { q: "", cat: "All", shown: PAGE });
       searchEl.value = "";
@@ -321,6 +421,61 @@
   }
 
   /* ---------------------------------------------------------------------------
+     A5b. DESCRIZIONE COMPLETA (campo "details", la stessa dell'annuncio Etsy)
+     Trasforma il testo semplice in HTML ordinato, con poche regole:
+       - riga TUTTA MAIUSCOLA            → titoletto
+       - riga che inizia con • - ✓       → elenco puntato (✓ = spunte)
+       - riga che inizia con 1. 2. 3.    → passaggi numerati
+       - "Etichetta: testo" in un elenco → l'etichetta va in grassetto
+       - riga vuota                      → nuovo blocco
+       - tutto il resto                  → paragrafo
+     ------------------------------------------------------------------------ */
+  function detailsHTML(text) {
+    const lines = String(text || "").replace(/\r/g, "").split("\n");
+    let html = "";
+    let list = null; // elenco in costruzione: { tag, kind, items }
+    let started = false; // false finché non è comparso il primo blocco "vero"
+    const flush = () => {
+      if (list) html += `<${list.tag} class="dt-${list.kind}">${list.items.join("")}</${list.tag}>`;
+      list = null;
+    };
+    const isHeading = (l) => {
+      const letters = l.replace(/[^A-Za-z]/g, "");
+      if (letters.length < 4 || l.length > 110 || /[.!?]$/.test(l)) return false;
+      return letters.replace(/[^A-Z]/g, "").length / letters.length >= 0.75;
+    };
+    const label = (t) => {
+      const m = t.match(/^([^:]{2,34}):\s+(.+)$/);
+      // Niente grassetto se l'"etichetta" contiene una frase intera (es. "Editable in Canva. Fonts used")
+      return m && !/[.!?]\s/.test(m[1]) ? `<b>${esc(m[1])}:</b> ${esc(m[2])}` : esc(t);
+    };
+    const push = (tag, kind, item) => {
+      if (!list || list.kind !== kind) { flush(); list = { tag, kind, items: [] }; }
+      list.items.push(`<li>${label(item)}</li>`);
+      started = true;
+    };
+    for (const raw of lines) {
+      const l = raw.trim();
+      let m;
+      if (!l) { flush(); continue; }
+      if ((m = l.match(/^([•✓✔✦*]|-|–)\s+(.+)$/))) { push("ul", /[✓✔]/.test(m[1]) ? "check" : "bullet", m[2]); continue; }
+      if ((m = l.match(/^\d+[.)]\s+(.+)$/))) { push("ol", "steps", m[1]); continue; }
+      flush();
+      if (/^designed by .+ AI tools/i.test(l)) { html += `<p class="dt-note">${esc(l)}</p>`; continue; }
+      if (isHeading(l)) {
+        // Il primo titolo in assoluto è lo "slogan" dell'annuncio: lo mostriamo grande.
+        html += started ? `<h3 class="dt-h">${esc(l.replace(/:$/, ""))}</h3>` : `<p class="dt-hook">${esc(l)}</p>`;
+        started = true;
+        continue;
+      }
+      html += `<p${started ? "" : ' class="dt-lead"'}>${esc(l)}</p>`;
+      started = true;
+    }
+    flush();
+    return html;
+  }
+
+  /* ---------------------------------------------------------------------------
      A6. PAGINA PRODOTTO (product.html?p=id)
      ------------------------------------------------------------------------ */
   function renderProductPage(root) {
@@ -342,7 +497,7 @@
 
     // Meta tag dinamici: titolo, descrizione, canonical, Open Graph.
     const pageUrl = `${SITE.url}/${productPage(p)}`;
-    document.title = `${p.name} — Canva Workbook | ${SITE.name}`;
+    document.title = `${p.name} | ${SITE.name}`;
     $('meta[name="description"]')?.setAttribute("content", `${p.tagline || ""} ${p.description}`.trim().slice(0, 158));
     $('link[rel="canonical"]')?.setAttribute("href", pageUrl);
     $('meta[property="og:title"]')?.setAttribute("content", `${p.name} — ${SITE.name}`);
@@ -362,7 +517,7 @@
           </ol></nav>
           <div class="p-grid">
             <div class="gallery" data-reveal>
-              <div class="gallery__main">${img(images[0], { alt: p.etsyTitle || p.name, sizes: "(max-width: 900px) 100vw, 55vw", eager: true })}</div>
+              <div class="gallery__main mat"${matBg(images[0])}>${img(images[0], { alt: p.etsyTitle || p.name, sizes: "(max-width: 900px) 100vw, 55vw", eager: true })}</div>
               ${
                 images.length > 1
                   ? `<ul class="gallery__thumbs" aria-label="Product images">${images
@@ -379,6 +534,7 @@
               <h1 id="p-title" data-hero style="--d:.1s">${esc(p.name)}</h1>
               ${p.tagline ? `<p class="tag" data-hero style="--d:.15s">${esc(p.tagline)}</p>` : ""}
               <p class="desc" data-hero style="--d:.2s">${esc(p.description)}</p>
+              ${p.details ? `<a class="p-more" href="#details" data-hero style="--d:.21s">Read the full description <span aria-hidden="true">↓</span></a>` : ""}
               ${p.audience ? `<p class="audience" data-hero style="--d:.22s"><b>Made for:</b> ${esc(p.audience)}</p>` : ""}
               <div data-hero style="--d:.25s">${specsHTML(p)}${includesHTML(p)}</div>
               <div class="buy" data-hero style="--d:.3s" data-main-buy>
@@ -394,6 +550,29 @@
           </div>
         </div>
       </section>
+      ${
+        p.details
+          ? `<section class="pd" id="details" aria-labelledby="pd-title"><div class="container pd__grid">
+              <aside class="pd__side">
+                <p class="eyebrow" data-reveal>Product details</p>
+                <h2 class="pd__title" id="pd-title" data-reveal style="--d:.08s">About this <em>product</em>.</h2>
+                <div class="pd__card" data-reveal style="--d:.16s">
+                  <div class="pd__card-top">
+                    <span class="pd__thumb">${img(p.image, { alt: "", sizes: "72px" })}</span>
+                    <p class="pd__name">${esc(p.name)}${p.price ? `<small>${esc(p.price)}</small>` : ""}</p>
+                  </div>
+                  ${isLive(p) ? `<a class="btn btn--dark" ${etsyHref(p)}>Buy on Etsy ${ARROW}${NEW_TAB}</a>` : `<span class="btn btn--line" aria-disabled="true">Coming soon</span>`}
+                  <ul class="pd__trust">
+                    <li>Instant digital download</li>
+                    <li>Secure checkout and delivery by Etsy</li>
+                    <li>Nothing is shipped</li>
+                  </ul>
+                </div>
+              </aside>
+              <div class="pd__body">${detailsHTML(p.details)}</div>
+            </div></section>`
+          : ""
+      }
       ${
         others.length
           ? `<section class="section collection" aria-labelledby="more-title"><div class="container">
@@ -427,6 +606,7 @@
         const src = btn.dataset.src;
         const main = $(".gallery__main img", root); // sempre l'immagine attuale
         thumbs.forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+        $(".gallery__main", root).style.setProperty("--bg", `url('${src.replace(ETSY_SIZE, "il_570xN")}')`);
         // Piccola dissolvenza: abbasso l'opacità, cambio immagine al caricamento.
         main.style.opacity = ".2";
         const tmp = document.createElement("div");
@@ -496,7 +676,8 @@
       if (open) setTimeout(() => $("a", menu)?.focus(), 150);
     };
     toggle.addEventListener("click", () => setOpen(toggle.getAttribute("aria-expanded") !== "true"));
-    menu.addEventListener("click", (e) => { if (e.target.closest("a")) setOpen(false); });
+    // Si chiude toccando un link o lo sfondo scuro fuori dal pannello.
+    menu.addEventListener("click", (e) => { if (e.target === menu || e.target.closest("a")) setOpen(false); });
     document.addEventListener("keydown", (e) => {
       if (!menu.classList.contains("is-open")) return;
       if (e.key === "Escape") { setOpen(false); toggle.focus(); }
@@ -509,6 +690,35 @@
       }
     });
     window.matchMedia("(min-width: 901px)").addEventListener("change", (e) => e.matches && setOpen(false));
+  }
+
+  /* ---------------------------------------------------------------------------
+     B2b. CONTENUTI DEL MENU — categorie (con quanti prodotti) e prodotti in
+     evidenza, generati dal catalogo: aggiungi un prodotto e il menu si aggiorna.
+     ------------------------------------------------------------------------ */
+  function renderMenu() {
+    const panel = $("[data-menu-base]");
+    if (!panel) return;
+    const base = panel.dataset.menuBase || "";
+    const counts = PRODUCTS.reduce((m, p) => (p.category ? m.set(p.category, (m.get(p.category) || 0) + 1) : m), new Map());
+    const cats = $("[data-menu-cats]", panel);
+    if (cats && counts.size > 1) {
+      cats.innerHTML = [...counts.keys()].sort()
+        .map((c) => `<a href="${base}?cat=${encodeURIComponent(c)}#collection" data-cat-link="${esc(c)}">${esc(c)} <small>${counts.get(c)}</small></a>`).join("");
+      $("[data-menu-cats-wrap]", panel).hidden = false;
+    }
+    const picks = $("[data-menu-picks]", panel);
+    const list = [...featured, ...[...PRODUCTS].reverse().filter((p) => !p.featured)].slice(0, 3);
+    if (picks && list.length) {
+      const root = base === "/" ? "/" : ""; // la pagina 404 può stare in qualsiasi cartella
+      picks.innerHTML = list.map((p) => `
+        <li><a href="${root}${productPage(p)}">
+          <span class="mm-thumb">${img(p.image, { alt: "", sizes: "48px" })}</span>
+          <b>${esc(p.name)}</b>
+          <em>${isLive(p) ? esc(p.price || "") : "Soon"}</em>
+        </a></li>`).join("");
+      $("[data-menu-picks-wrap]", panel).hidden = false;
+    }
   }
 
   /* ---------------------------------------------------------------------------
@@ -608,18 +818,46 @@
   }
 
   /* ---------------------------------------------------------------------------
+     B7. EFFETTI — barra di avanzamento, luce che segue il mouse nell'hero,
+     bottoni "magnetici". Tutto solo con transform/variabili CSS.
+     ------------------------------------------------------------------------ */
+  function initEffects() {
+    const bar = $("[data-progress]");
+    if (bar) {
+      let raf = 0;
+      const upd = () => {
+        raf = 0;
+        const max = document.documentElement.scrollHeight - innerHeight;
+        bar.style.transform = `scaleX(${max > 0 ? Math.min(scrollY / max, 1) : 0})`;
+      };
+      addEventListener("scroll", () => { if (!raf) raf = requestAnimationFrame(upd); }, { passive: true });
+      upd();
+    }
+    $$("[data-count-products]").forEach((el) => (el.textContent = PRODUCTS.length));
+    if (reduceMotion || !finePointer) return;
+    const hero = $("[data-hero-section]");
+    hero?.addEventListener("pointermove", (e) => {
+      const r = hero.getBoundingClientRect();
+      hero.style.setProperty("--mx", `${e.clientX - r.left}px`);
+      hero.style.setProperty("--my", `${e.clientY - r.top}px`);
+    });
+  }
+
+  /* ---------------------------------------------------------------------------
      AVVIO
      ------------------------------------------------------------------------ */
   const productRoot = $("[data-product-root]");
   if (productRoot) {
     renderProductPage(productRoot);
   } else {
-    renderHeroStage();
+    renderBento();
+    renderSpotlight();
     renderFeatured();
     renderCollection();
     if (PRODUCTS.length) injectLD({ "@type": "ItemList", itemListElement: PRODUCTS.map((p, i) => ({ "@type": "ListItem", position: i + 1, item: productLD(p) })) });
   }
   renderFooter();
+  renderMenu();
   initHeader();
   initMenu();
   initSpy();
@@ -627,4 +865,6 @@
   initIntro();
   initMotion();
   initTilt();
+  initQuickView();
+  initEffects();
 })();

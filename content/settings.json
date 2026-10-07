@@ -2,5 +2,37 @@
   "name": "VelvetDigitalLabb",
   "url": "https://velvetdigitallabb.netlify.app",
   "shopUrl": "https://www.etsy.com/shop/VelvetDigitalLabb",
-  "social": []
+  "social": [],
+  "finder": [
+    {
+      "label": "Define my brand",
+      "text": "You know what you do, but can't yet explain why it's different.",
+      "category": "Branding"
+    },
+    {
+      "label": "Plan my website",
+      "text": "You need a clear structure: pages, sitemap and wireframes before you build.",
+      "category": "Website Planning"
+    },
+    {
+      "label": "Write my website",
+      "text": "Your structure is ready — now you need the words for every page.",
+      "category": "Copywriting"
+    },
+    {
+      "label": "Launch a site fast",
+      "text": "You want a professional website online this week, without builders or subscriptions.",
+      "category": "Website Templates"
+    },
+    {
+      "label": "Run my Etsy shop",
+      "text": "You sell on Etsy and want to know your real profit after every fee.",
+      "category": "Etsy Tools"
+    },
+    {
+      "label": "All of it",
+      "text": "Brand, structure and copy in one guided path, at a bundle price.",
+      "category": "Bundles"
+    }
+  ]
 }

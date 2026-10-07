@@ -53,7 +53,12 @@ collections:
                 hint: "Carica un file (JPG/WebP, circa 1200 px) oppure incolla il link di un'immagine Etsy."
               - { label: "Categoria", name: category, widget: string, hint: "Diventa un filtro del catalogo. Usa sempre lo stesso nome: Branding, Website Planning, Copywriting, Bundles…" }
               - { label: "Frase breve (tagline)", name: tagline, widget: string, required: false }
-              - { label: "Descrizione", name: description, widget: text }
+              - { label: "Descrizione", name: description, widget: text, hint: "Breve (2-3 righe): appare in alto nella pagina prodotto e su Google." }
+              - label: "Descrizione completa (come su Etsy)"
+                name: details
+                widget: text
+                required: false
+                hint: "Incolla qui la descrizione dell'annuncio Etsy così com'è. Righe TUTTE MAIUSCOLE = titoletti; righe che iniziano con • - ✓ = elenchi; righe che iniziano con 1. 2. 3. = passaggi numerati. Lascia una riga vuota tra un blocco e l'altro."
               - { label: "Prezzo", name: price, widget: string, required: false, hint: "Es. €17.90 — lascia vuoto per non mostrarlo" }
               - { label: "In evidenza (sezione Featured)", name: featured, widget: boolean, default: false }
               - { label: "Etichetta", name: badge, widget: string, required: false, hint: "Es. New, Flagship. Facoltativa." }
