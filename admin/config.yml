@@ -5,7 +5,7 @@
 # =============================================================================
 backend:
   name: github
-  repo: TUO-UTENTE-GITHUB/velvetdigitallabb
+  repo: donovan200717047/velvetdigitallabb
   branch: main
   commit_messages:
     update: "Aggiorna {{slug}} dal pannello"
