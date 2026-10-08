@@ -297,6 +297,89 @@
     $$("[data-finale]").forEach((el) => io.observe(el));
   }
 
+  /* ----------------------------------------- RICHIESTA PERSONALIZZATA
+     Scheda "Need something made for you?" sotto i prodotti.
+     - Il bottone apre/chiude il modulo.
+     - Arrivando da una pagina prodotto (?about=id#custom) il modulo si apre
+       da solo con il prodotto già scelto.
+     - L'invio va a Netlify Forms (form "custom-request"); Netlify inoltra
+       la richiesta per email. Se qualcosa va storto mostriamo l'indirizzo
+       email con il messaggio già pronto.
+     ------------------------------------------------------------------ */
+  const custom = $("[data-custom]");
+  if (custom) {
+    const form = $("[data-custom-form]", custom);
+    const openBtn = $("[data-custom-open]", custom);
+    const status = $("[data-custom-status]", custom);
+    const sendBtn = $("[data-custom-send]", custom);
+    const productSel = $("[data-custom-products]", custom);
+    const EMAIL = (window.VDL_SITE && window.VDL_SITE.email) || "";
+    const mailto = (body = "") =>
+      `mailto:${EMAIL}?subject=${encodeURIComponent("Custom product request")}${body ? `&body=${encodeURIComponent(body)}` : ""}`;
+
+    // Indirizzo email visibile (scritto da JS: i robot che raccolgono email lo trovano meno facilmente)
+    if (EMAIL) {
+      const a = $("[data-mail-link]", custom);
+      a.href = mailto(); a.textContent = EMAIL;
+      $("[data-custom-mail]", custom).hidden = false;
+    }
+    // Elenco prodotti nel menu a tendina "Related product"
+    productSel.insertAdjacentHTML("beforeend", PRODUCTS.map((p) => `<option value="${esc(p.name)}" data-id="${esc(p.id)}">${esc(p.name)}</option>`).join(""));
+
+    const setOpen = (open, focus) => {
+      form.hidden = !open;
+      custom.classList.toggle("is-open", open);
+      openBtn.setAttribute("aria-expanded", String(open));
+      if (open && focus) setTimeout(() => $("input[name=name]", form).focus({ preventScroll: true }), 50);
+    };
+    openBtn.addEventListener("click", () => setOpen(form.hidden, true));
+
+    const openFromLink = () => {
+      setOpen(true);
+      requestAnimationFrame(() => custom.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" }));
+    };
+    // ?about=id → prodotto già selezionato
+    const about = new URLSearchParams(location.search).get("about");
+    if (about) {
+      const opt = [...productSel.options].find((o) => o.dataset.id === about);
+      if (opt) { opt.selected = true; $("select[name=type]", form).value = "Changes to one of your products"; }
+    }
+    if (location.hash === "#custom") setTimeout(openFromLink, 300);
+    addEventListener("hashchange", () => { if (location.hash === "#custom") openFromLink(); });
+    $$("[data-custom-link]").forEach((l) => l.addEventListener("click", (e) => {
+      if (l.getAttribute("href").replace(/^\.?\/?/, "") !== "#custom") return; // link da altre pagine: lascia navigare
+      e.preventDefault();
+      history.replaceState(null, "", "#custom");
+      openFromLink();
+    }));
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+      const data = new FormData(form);
+      sendBtn.disabled = true; sendBtn.textContent = "Sending…";
+      status.className = "cf-status"; status.textContent = "";
+      try {
+        const res = await fetch("/", {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams(data).toString()
+        });
+        if (!res.ok) throw new Error(res.status);
+        custom.classList.add("is-sent");
+        form.innerHTML = `<div class="cf-done"><b>Thank you! Your request is on its way.</b><span>We'll reply to <em>${esc(data.get("email"))}</em> as soon as possible.</span></div>`;
+      } catch (err) {
+        // Invio non riuscito: offriamo l'email con il messaggio già scritto
+        const body = `${data.get("message") || ""}\n\n— ${data.get("type") || ""}${data.get("product") ? ` · ${data.get("product")}` : ""}\n${data.get("name") || ""} (${data.get("email") || ""})`;
+        status.className = "cf-status is-error";
+        status.innerHTML = EMAIL
+          ? `Sorry, the request couldn't be sent. <a href="${esc(mailto(body))}">Email it to us instead</a> — your message is already written.`
+          : "Sorry, the request couldn't be sent. Please try again in a moment.";
+        sendBtn.disabled = false; sendBtn.textContent = "Send request";
+      }
+    });
+  }
+
   /* -------------------------------------------- social nel footer minimal */
   const soc = $("[data-footer-social-inline]");
   const S = (window.VDL_SITE && window.VDL_SITE.social) || [];

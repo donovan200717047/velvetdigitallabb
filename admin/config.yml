@@ -94,6 +94,7 @@ collections:
           - { label: "Nome del brand", name: name, widget: string }
           - { label: "Indirizzo del sito", name: url, widget: string }
           - { label: "Link allo shop Etsy", name: shopUrl, widget: string }
+          - { label: "Email per le richieste personalizzate", name: email, widget: string, required: false, hint: "Compare nella sezione 'Need something made for you?' della home." }
           - label: "Social"
             name: social
             widget: list

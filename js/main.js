@@ -445,21 +445,26 @@
       return letters.replace(/[^A-Z]/g, "").length / letters.length >= 0.75;
     };
     const label = (t) => {
-      const m = t.match(/^([^:]{2,34}):\s+(.+)$/);
+      // "Etichetta: testo" oppure "Etichetta — testo" → etichetta in grassetto.
       // Niente grassetto se l'"etichetta" contiene una frase intera (es. "Editable in Canva. Fonts used")
-      return m && !/[.!?]\s/.test(m[1]) ? `<b>${esc(m[1])}:</b> ${esc(m[2])}` : esc(t);
+      const m = t.match(/^([^:]{2,34}):\s+(.+)$/) || t.match(/^(.{2,40}?)\s+—\s+(.+)$/);
+      if (!m || /[.!?]\s/.test(m[1])) return esc(t);
+      return t.includes(`${m[1]}:`) ? `<b>${esc(m[1])}:</b> ${esc(m[2])}` : `<b>${esc(m[1])}</b> — ${esc(m[2])}`;
     };
-    const push = (tag, kind, item) => {
+    const push = (tag, kind, item, pre = "") => {
       if (!list || list.kind !== kind) { flush(); list = { tag, kind, items: [] }; }
-      list.items.push(`<li>${label(item)}</li>`);
+      list.items.push(`<li>${pre}${label(item)}</li>`);
       started = true;
     };
     for (const raw of lines) {
       const l = raw.trim();
       let m;
-      if (!l) { flush(); continue; }
-      if ((m = l.match(/^([•✓✔✦*]|-|–)\s+(.+)$/))) { push("ul", /[✓✔]/.test(m[1]) ? "check" : "bullet", m[2]); continue; }
+      if (!l || /^[━─═=_~*·•\-—–\s]{3,}$/.test(l)) { flush(); continue; } // righe vuote e linee divisorie ━━━
+      if (/^questions\b.*\bmessage\b/i.test(l)) continue; // "Questions? Send me a message": su Etsy rimanda alla chat
+      if ((m = l.match(/^✦\s*(.+)$/)) && isHeading(m[1])) { flush(); html += `<h3 class="dt-h">${esc(m[1].replace(/:$/, ""))}</h3>`; started = true; continue; }
+      if ((m = l.match(/^([•✓✔✘✗✦*]|-|–)\s+(.+)$/))) { push("ul", /[✓✔]/.test(m[1]) ? "check" : /[✘✗]/.test(m[1]) ? "cross" : "bullet", m[2]); continue; }
       if ((m = l.match(/^\d+[.)]\s+(.+)$/))) { push("ol", "steps", m[1]); continue; }
+      if ((m = l.match(/^(\d{2})\s+(.+)$/))) { push("ol", "index", m[2], `<span class="n">${m[1]}</span>`); continue; } // "01 ORBIT · 404 — …"
       flush();
       if (/^designed by .+ AI tools/i.test(l)) { html += `<p class="dt-note">${esc(l)}</p>`; continue; }
       if (isHeading(l)) {
@@ -546,6 +551,7 @@
                 }
               </div>
               <p class="note" data-hero style="--d:.35s">Digital download — no physical item is shipped. Checkout, payment and file delivery are handled securely by Etsy.</p>
+              <a class="p-custom" href="./?about=${encodeURIComponent(p.id)}#custom" data-hero style="--d:.38s"><span>Need it tailored to you?</span> Request a custom version →</a>
             </div>
           </div>
         </div>
@@ -567,6 +573,7 @@
                     <li>Secure checkout and delivery by Etsy</li>
                     <li>Nothing is shipped</li>
                   </ul>
+                  <a class="pd__custom" href="./?about=${encodeURIComponent(p.id)}#custom">Need a custom version? <b>Ask us →</b></a>
                 </div>
               </aside>
               <div class="pd__body">${detailsHTML(p.details)}</div>

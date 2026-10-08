@@ -738,6 +738,12 @@ body.qv-open { overflow: hidden; }
 .pd__body b { font-weight: 600; }
 .pd__body .dt-bullet li::before { content: ""; position: absolute; left: .35rem; top: .7em; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-ink); }
 .pd__body .dt-check li::before { content: "✓"; position: absolute; left: 0; top: 0; color: var(--accent-ink); font-weight: 700; }
+.pd__body .dt-cross li::before { content: "✕"; position: absolute; left: .1rem; top: 0; color: var(--ink-soft); font-weight: 700; }
+/* Elenco con numeri a due cifre (es. "01 ORBIT · 404 — …") */
+.pd__body .dt-index { gap: .1rem; }
+.pd__body .dt-index li { padding: .65rem 0 .65rem 3rem; border-bottom: 1px solid var(--line-light); }
+.pd__body .dt-index li:first-child { border-top: 1px solid var(--line-light); }
+.pd__body .dt-index .n { position: absolute; left: 0; top: .72rem; font-size: .78rem; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--accent-ink); }
 .pd__body .dt-steps { counter-reset: step; }
 .pd__body .dt-steps li { counter-increment: step; padding-left: 2.4rem; min-height: 1.7rem; }
 .pd__body .dt-steps li::before { content: counter(step); position: absolute; left: 0; top: .05rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; display: grid; place-items: center; font-size: .78rem; font-weight: 600; background: var(--dark); color: var(--light); }
@@ -772,3 +778,13 @@ body.qv-open { overflow: hidden; }
   object-fit: contain; object-position: center;
   filter: drop-shadow(0 14px 22px rgba(14, 13, 12, .22)) drop-shadow(0 2px 4px rgba(14, 13, 12, .12));
 }
+
+/* Link "richiesta personalizzata" (pagina prodotto e menu) */
+.p-custom { display: inline-flex; flex-wrap: wrap; gap: .35rem; margin-top: 1rem; font-size: .88rem; color: var(--on-dark); text-decoration: none; }
+.p-custom span { color: var(--on-dark-soft); }
+.p-custom:hover { color: var(--accent); }
+.pd__custom { font-size: .82rem; color: var(--ink-soft); text-decoration: none; padding-top: .8rem; border-top: 1px solid var(--line-light); }
+.pd__custom b { color: var(--accent-ink); font-weight: 600; }
+.pd__custom:hover b { text-decoration: underline; }
+.mm-custom { display: block; text-align: center; font-size: .82rem; color: var(--on-dark-soft); text-decoration: none; padding: .55rem; border: 1px dashed var(--line-dark); border-radius: 999px; }
+.mm-custom b { color: var(--on-dark); font-weight: 600; }

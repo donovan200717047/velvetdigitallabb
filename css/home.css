@@ -389,3 +389,66 @@
   .shopgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 12px; }
   .sg-name { font-size: .86rem; }
 }
+
+/* ---------------------------------------------------------------------------
+   3c. RICHIESTA PRODOTTO PERSONALIZZATO — scheda compatta sotto i prodotti
+   ------------------------------------------------------------------------ */
+.custom {
+  position: relative; overflow: hidden; isolation: isolate;
+  margin-top: clamp(2.5rem, 5vw, 3.5rem); padding: clamp(1.4rem, 3vw, 2.2rem);
+  border-radius: 24px; background: var(--dark); color: var(--on-dark);
+  box-shadow: 0 40px 80px -50px rgba(14, 13, 12, .6);
+}
+.custom::before { /* bagliore brace, come nella hero */
+  content: ""; position: absolute; inset: -40% -10% auto auto; width: 60%; aspect-ratio: 1; z-index: -1;
+  background: radial-gradient(closest-side, rgba(224, 85, 45, .28), transparent 70%);
+}
+.custom__top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 1.2rem 3rem; align-items: center; }
+.custom__title { font-size: clamp(1.6rem, 1rem + 2vw, 2.5rem); line-height: 1; letter-spacing: -.045em; margin: .7rem 0 .8rem; }
+.custom__title em { color: var(--accent); }
+.custom__text > p:last-child { color: var(--on-dark-soft); max-width: 40rem; font-size: .98rem; }
+.custom__actions { display: grid; justify-items: end; gap: .7rem; }
+.custom__actions .btn .arrow { transition: transform .45s var(--ease-out); }
+.custom.is-open .custom__actions .btn .arrow { transform: rotate(90deg); }
+.custom__mail { font-size: .82rem; color: var(--on-dark-soft); }
+.custom__mail a { color: var(--on-dark); text-decoration: none; border-bottom: 1px solid var(--accent); }
+.custom__mail a:hover { color: var(--accent); }
+
+.custom__form { margin-top: 1.6rem; padding-top: 1.6rem; border-top: 1px solid var(--line-dark); animation: cfIn .6s var(--ease-out); }
+@keyframes cfIn { from { opacity: 0; transform: translateY(-8px); } }
+.cf-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem 1.2rem; }
+.cf-field { display: grid; gap: .4rem; font-size: .8rem; color: var(--on-dark-soft); }
+.cf-field--wide { grid-column: 1 / -1; }
+.cf-field b { color: var(--accent); font-weight: 500; }
+.cf-field i { font-style: normal; opacity: .7; }
+.cf-field input, .cf-field select, .cf-field textarea {
+  width: 100%; font: inherit; font-size: .95rem; color: var(--on-dark);
+  background: rgba(242, 238, 232, .05); border: 1px solid var(--line-dark); border-radius: 12px; padding: .75rem .9rem;
+  transition: border-color .25s, background-color .25s;
+}
+.cf-field select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--on-dark-soft) 50%), linear-gradient(135deg, var(--on-dark-soft) 50%, transparent 50%); background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%; background-size: 5px 5px; background-repeat: no-repeat; padding-right: 2.2rem; }
+.cf-field select option { color: var(--ink); }
+.cf-field textarea { resize: vertical; min-height: 6.5rem; line-height: 1.5; }
+.cf-field ::placeholder { color: rgba(242, 238, 232, .35); }
+.cf-field input:focus, .cf-field select:focus, .cf-field textarea:focus { outline: none; border-color: var(--accent); background: rgba(242, 238, 232, .08); }
+.cf-foot { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem 1.4rem; margin-top: 1.2rem; }
+.custom .btn--dark { --btn-bg: var(--light); --btn-fg: var(--dark); --btn-fill: var(--accent); }
+.custom .btn--dark:disabled { opacity: .6; cursor: progress; }
+.cf-note { font-size: .78rem; color: var(--on-dark-soft); }
+.cf-status:empty { display: none; }
+.cf-status { margin-top: 1rem; font-size: .9rem; }
+.cf-status.is-error { color: var(--accent-soft); }
+.cf-status a { color: var(--on-dark); }
+.cf-done { display: grid; gap: .3rem; padding: .4rem 0; }
+.cf-done b { font-size: 1.15rem; font-weight: 600; }
+.cf-done span { color: var(--on-dark-soft); font-size: .92rem; }
+.cf-done em { font-style: normal; color: var(--on-dark); }
+
+@media (max-width: 760px) {
+  .custom__top { grid-template-columns: 1fr; }
+  .custom__actions { justify-items: stretch; }
+  .custom__actions .btn { width: 100%; }
+  .custom__mail { text-align: center; }
+  .cf-grid { grid-template-columns: 1fr; }
+  .cf-foot .btn { width: 100%; }
+}

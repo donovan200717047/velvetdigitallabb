@@ -98,6 +98,7 @@
       </div>
       <div class="mm-foot">
         <a class="btn btn--small" data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">Visit the Etsy shop <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg><span class="visually-hidden">(opens in a new tab)</span></a>
+        <a class="mm-custom" href="#custom" data-custom-link>Need something custom? <b>Request it →</b></a>
         <p>Instant download · Secure checkout on Etsy</p>
       </div>
     </div>
@@ -177,6 +178,58 @@
           <a class="link-underline" data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">View the full shop on Etsy ↗<span class="visually-hidden"> (opens in a new tab)</span></a>
         </div>
         <noscript><p>Browse every product on our <a href="https://www.etsy.com/shop/VelvetDigitalLabb">Etsy shop</a>.</p></noscript>
+
+        <!-- =================================================================
+             RICHIESTA PRODOTTO PERSONALIZZATO
+             Scheda compatta subito sotto i prodotti: chiusa di default, il
+             modulo si apre con un clic. Le richieste arrivano a Netlify
+             (Netlify Forms) che le inoltra per email. Se l'invio fallisce,
+             il visitatore può scrivere direttamente all'indirizzo email
+             (lo inserisce home.js da content/settings.json → "email").
+             ============================================================== -->
+        <div class="custom" id="custom" data-custom data-reveal>
+          <div class="custom__top">
+            <div class="custom__text">
+              <p class="kicker">Made to order</p>
+              <h2 class="custom__title">Need something <em>made for you?</em></h2>
+              <p>Different pages, your brand colours, extra features or a completely new tool: tell us what you need and we'll reply by email with an idea and a quote.</p>
+            </div>
+            <div class="custom__actions">
+              <button class="btn" type="button" aria-expanded="false" aria-controls="custom-form" data-custom-open>Request a custom product <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+              <p class="custom__mail" data-custom-mail hidden>or write to <a data-mail-link href="#"></a></p>
+            </div>
+          </div>
+
+          <form class="custom__form" id="custom-form" name="custom-request" method="POST" data-netlify="true" netlify-honeypot="bot-field" data-custom-form hidden>
+            <input type="hidden" name="form-name" value="custom-request">
+            <input type="hidden" name="subject" value="Custom product request — VelvetDigitalLabb">
+            <p class="visually-hidden"><label>Leave this empty <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+            <div class="cf-grid">
+              <label class="cf-field"><span>Your name</span><input type="text" name="name" autocomplete="name" placeholder="Alex"></label>
+              <label class="cf-field"><span>Your email <b aria-hidden="true">*</b></span><input type="email" name="email" autocomplete="email" required placeholder="you@example.com"></label>
+              <label class="cf-field"><span>What do you need?</span>
+                <select name="type">
+                  <option>A website template</option>
+                  <option>A Canva workbook or planner</option>
+                  <option>A spreadsheet or tool</option>
+                  <option>Changes to one of your products</option>
+                  <option>Something else</option>
+                </select>
+              </label>
+              <label class="cf-field"><span>Related product <i>(optional)</i></span>
+                <select name="product" data-custom-products><option value="">None / not sure</option></select>
+              </label>
+              <label class="cf-field cf-field--wide"><span>Tell us about your request <b aria-hidden="true">*</b></span>
+                <textarea name="message" rows="4" required placeholder="e.g. The SaaS template with two extra pages, my brand colours and an Italian version."></textarea>
+              </label>
+            </div>
+            <div class="cf-foot">
+              <button class="btn btn--dark" type="submit" data-custom-send>Send request</button>
+              <p class="cf-note">We only use your details to reply to this request.</p>
+            </div>
+            <p class="cf-status" data-custom-status role="status" aria-live="polite"></p>
+          </form>
+        </div>
       </div>
     </section>
 
@@ -256,6 +309,7 @@
           <a href="#collection">Collection</a>
           <a href="#studio">Studio</a>
           <a href="#process">Process</a>
+          <a href="#custom" data-custom-link>Custom requests</a>
           <a data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">Etsy shop ↗</a>
           <span data-footer-social-inline></span>
         </nav>
