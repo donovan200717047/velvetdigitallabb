@@ -72,9 +72,6 @@
     } decoding="async"${cls ? ` class="${cls}"` : ""}>`;
   }
 
-  // Sfondo sfocato dei riquadri foto (.mat): la stessa foto, versione piccola.
-  const matBg = (src) => (src ? ` style="--bg:url('${esc(ETSY_SIZE.test(src) ? src.replace(ETSY_SIZE, "il_570xN") : src)}')"` : "");
-
   // Link principale di un prodotto: Etsy se c'è l'URL, altrimenti nessun link.
   const etsyHref = (p) => (isLive(p) ? `href="${esc(p.url)}" ${EXT}` : "");
 
@@ -92,12 +89,13 @@
 
   function tileHTML(p, cls, sizes, eager) {
     return `
-      <a class="tile ${cls}" href="${productPage(p)}">
+      <a class="tile ${cls}" ${isLive(p) ? etsyHref(p) : `href="${productPage(p)}"`}>
         ${img(p.image, { alt: p.etsyTitle || p.name, sizes, eager })}
         <span class="tile__bar">
           <span><small>${esc(p.category || "")}</small><b>${esc(p.name)}</b></span>
           ${p.price ? `<em>${esc(p.price)}</em>` : ""}
         </span>
+        ${isLive(p) ? NEW_TAB : ""}
       </a>`;
   }
 
@@ -156,7 +154,7 @@
         <button class="qv__close" type="button" aria-label="Close" data-qv-close>×</button>
         <div class="qv__grid">
           <div class="qv__media">
-            <div class="qv__main mat"${matBg(images[0])}>${img(images[0], { alt: p.etsyTitle || p.name, sizes: "(max-width: 760px) 90vw, 420px", eager: true })}</div>
+            <div class="qv__main">${img(images[0], { alt: p.etsyTitle || p.name, sizes: "(max-width: 760px) 90vw, 420px", eager: true })}</div>
             ${images.length > 1 ? `<div class="qv__thumbs">${images.map((src, i) => `<button type="button" aria-label="Image ${i + 1}" aria-pressed="${i === 0}" data-src="${esc(src)}">${img(src, { alt: "", sizes: "64px" })}</button>`).join("")}</div>` : ""}
           </div>
           <div class="qv__info">
@@ -181,7 +179,6 @@
       const t = e.target.closest(".qv__thumbs button");
       if (!t) return;
       $$(".qv__thumbs button", dlg).forEach((b) => b.setAttribute("aria-pressed", String(b === t)));
-      $(".qv__main", dlg).style.setProperty("--bg", `url('${t.dataset.src.replace(ETSY_SIZE, "il_570xN")}')`);
       $(".qv__main", dlg).innerHTML = img(t.dataset.src, { alt: "", sizes: "(max-width: 760px) 90vw, 420px", eager: true });
     });
     // Delegazione: funziona anche per le card aggiunte dopo con "Load more".
@@ -213,14 +210,16 @@
     const hover = p.gallery && p.gallery[0];
     return `
       <li class="pcard" style="--i:${i % 12}">
-        <div class="pcard__media mat"${matBg(p.image)}>
+        <div class="pcard__media">
           ${img(p.image, { alt: p.etsyTitle || p.name, sizes: CARD_SIZES })}
           ${hover ? img(hover, { alt: "", sizes: CARD_SIZES }) : ""}
           ${p.badge ? `<span class="pcard__badge">${esc(p.badge)}</span>` : ""}
         </div>
         <div class="pcard__body">
           <p class="pcard__cat">${esc(p.category || "")}</p>
-          <h3 class="pcard__name"><a href="${productPage(p)}">${esc(p.name)}</a></h3>
+          <h3 class="pcard__name">${
+            isLive(p) ? `<a ${etsyHref(p)}>${esc(p.name)}${NEW_TAB}</a>` : `<a href="${productPage(p)}">${esc(p.name)}</a>`
+          }</h3>
           <div class="pcard__foot">
             <span class="pcard__price">${isLive(p) ? esc(p.price || "") : "Coming soon"}</span>
             <a class="pcard__more" href="${productPage(p)}" data-quickview="${esc(p.id)}">Quick view<span class="visually-hidden"> of ${esc(p.name)}</span></a>
@@ -421,66 +420,6 @@
   }
 
   /* ---------------------------------------------------------------------------
-     A5b. DESCRIZIONE COMPLETA (campo "details", la stessa dell'annuncio Etsy)
-     Trasforma il testo semplice in HTML ordinato, con poche regole:
-       - riga TUTTA MAIUSCOLA            → titoletto
-       - riga che inizia con • - ✓       → elenco puntato (✓ = spunte)
-       - riga che inizia con 1. 2. 3.    → passaggi numerati
-       - "Etichetta: testo" in un elenco → l'etichetta va in grassetto
-       - riga vuota                      → nuovo blocco
-       - tutto il resto                  → paragrafo
-     ------------------------------------------------------------------------ */
-  function detailsHTML(text) {
-    const lines = String(text || "").replace(/\r/g, "").split("\n");
-    let html = "";
-    let list = null; // elenco in costruzione: { tag, kind, items }
-    let started = false; // false finché non è comparso il primo blocco "vero"
-    const flush = () => {
-      if (list) html += `<${list.tag} class="dt-${list.kind}">${list.items.join("")}</${list.tag}>`;
-      list = null;
-    };
-    const isHeading = (l) => {
-      const letters = l.replace(/[^A-Za-z]/g, "");
-      if (letters.length < 4 || l.length > 110 || /[.!?]$/.test(l)) return false;
-      return letters.replace(/[^A-Z]/g, "").length / letters.length >= 0.75;
-    };
-    const label = (t) => {
-      // "Etichetta: testo" oppure "Etichetta — testo" → etichetta in grassetto.
-      // Niente grassetto se l'"etichetta" contiene una frase intera (es. "Editable in Canva. Fonts used")
-      const m = t.match(/^([^:]{2,34}):\s+(.+)$/) || t.match(/^(.{2,40}?)\s+—\s+(.+)$/);
-      if (!m || /[.!?]\s/.test(m[1])) return esc(t);
-      return t.includes(`${m[1]}:`) ? `<b>${esc(m[1])}:</b> ${esc(m[2])}` : `<b>${esc(m[1])}</b> — ${esc(m[2])}`;
-    };
-    const push = (tag, kind, item, pre = "") => {
-      if (!list || list.kind !== kind) { flush(); list = { tag, kind, items: [] }; }
-      list.items.push(`<li>${pre}${label(item)}</li>`);
-      started = true;
-    };
-    for (const raw of lines) {
-      const l = raw.trim();
-      let m;
-      if (!l || /^[━─═=_~*·•\-—–\s]{3,}$/.test(l)) { flush(); continue; } // righe vuote e linee divisorie ━━━
-      if (/^questions\b.*\bmessage\b/i.test(l)) continue; // "Questions? Send me a message": su Etsy rimanda alla chat
-      if ((m = l.match(/^✦\s*(.+)$/)) && isHeading(m[1])) { flush(); html += `<h3 class="dt-h">${esc(m[1].replace(/:$/, ""))}</h3>`; started = true; continue; }
-      if ((m = l.match(/^([•✓✔✘✗✦*]|-|–)\s+(.+)$/))) { push("ul", /[✓✔]/.test(m[1]) ? "check" : /[✘✗]/.test(m[1]) ? "cross" : "bullet", m[2]); continue; }
-      if ((m = l.match(/^\d+[.)]\s+(.+)$/))) { push("ol", "steps", m[1]); continue; }
-      if ((m = l.match(/^(\d{2})\s+(.+)$/))) { push("ol", "index", m[2], `<span class="n">${m[1]}</span>`); continue; } // "01 ORBIT · 404 — …"
-      flush();
-      if (/^designed by .+ AI tools/i.test(l)) { html += `<p class="dt-note">${esc(l)}</p>`; continue; }
-      if (isHeading(l)) {
-        // Il primo titolo in assoluto è lo "slogan" dell'annuncio: lo mostriamo grande.
-        html += started ? `<h3 class="dt-h">${esc(l.replace(/:$/, ""))}</h3>` : `<p class="dt-hook">${esc(l)}</p>`;
-        started = true;
-        continue;
-      }
-      html += `<p${started ? "" : ' class="dt-lead"'}>${esc(l)}</p>`;
-      started = true;
-    }
-    flush();
-    return html;
-  }
-
-  /* ---------------------------------------------------------------------------
      A6. PAGINA PRODOTTO (product.html?p=id)
      ------------------------------------------------------------------------ */
   function renderProductPage(root) {
@@ -522,7 +461,7 @@
           </ol></nav>
           <div class="p-grid">
             <div class="gallery" data-reveal>
-              <div class="gallery__main mat"${matBg(images[0])}>${img(images[0], { alt: p.etsyTitle || p.name, sizes: "(max-width: 900px) 100vw, 55vw", eager: true })}</div>
+              <div class="gallery__main">${img(images[0], { alt: p.etsyTitle || p.name, sizes: "(max-width: 900px) 100vw, 55vw", eager: true })}</div>
               ${
                 images.length > 1
                   ? `<ul class="gallery__thumbs" aria-label="Product images">${images
@@ -539,7 +478,6 @@
               <h1 id="p-title" data-hero style="--d:.1s">${esc(p.name)}</h1>
               ${p.tagline ? `<p class="tag" data-hero style="--d:.15s">${esc(p.tagline)}</p>` : ""}
               <p class="desc" data-hero style="--d:.2s">${esc(p.description)}</p>
-              ${p.details ? `<a class="p-more" href="#details" data-hero style="--d:.21s">Read the full description <span aria-hidden="true">↓</span></a>` : ""}
               ${p.audience ? `<p class="audience" data-hero style="--d:.22s"><b>Made for:</b> ${esc(p.audience)}</p>` : ""}
               <div data-hero style="--d:.25s">${specsHTML(p)}${includesHTML(p)}</div>
               <div class="buy" data-hero style="--d:.3s" data-main-buy>
@@ -551,35 +489,10 @@
                 }
               </div>
               <p class="note" data-hero style="--d:.35s">Digital download — no physical item is shipped. Checkout, payment and file delivery are handled securely by Etsy.</p>
-              <a class="p-custom" href="./?about=${encodeURIComponent(p.id)}#custom" data-hero style="--d:.38s"><span>Need it tailored to you?</span> Request a custom version →</a>
             </div>
           </div>
         </div>
       </section>
-      ${
-        p.details
-          ? `<section class="pd" id="details" aria-labelledby="pd-title"><div class="container pd__grid">
-              <aside class="pd__side">
-                <p class="eyebrow" data-reveal>Product details</p>
-                <h2 class="pd__title" id="pd-title" data-reveal style="--d:.08s">About this <em>product</em>.</h2>
-                <div class="pd__card" data-reveal style="--d:.16s">
-                  <div class="pd__card-top">
-                    <span class="pd__thumb">${img(p.image, { alt: "", sizes: "72px" })}</span>
-                    <p class="pd__name">${esc(p.name)}${p.price ? `<small>${esc(p.price)}</small>` : ""}</p>
-                  </div>
-                  ${isLive(p) ? `<a class="btn btn--dark" ${etsyHref(p)}>Buy on Etsy ${ARROW}${NEW_TAB}</a>` : `<span class="btn btn--line" aria-disabled="true">Coming soon</span>`}
-                  <ul class="pd__trust">
-                    <li>Instant digital download</li>
-                    <li>Secure checkout and delivery by Etsy</li>
-                    <li>Nothing is shipped</li>
-                  </ul>
-                  <a class="pd__custom" href="./?about=${encodeURIComponent(p.id)}#custom">Need a custom version? <b>Ask us →</b></a>
-                </div>
-              </aside>
-              <div class="pd__body">${detailsHTML(p.details)}</div>
-            </div></section>`
-          : ""
-      }
       ${
         others.length
           ? `<section class="section collection" aria-labelledby="more-title"><div class="container">
@@ -613,7 +526,6 @@
         const src = btn.dataset.src;
         const main = $(".gallery__main img", root); // sempre l'immagine attuale
         thumbs.forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
-        $(".gallery__main", root).style.setProperty("--bg", `url('${src.replace(ETSY_SIZE, "il_570xN")}')`);
         // Piccola dissolvenza: abbasso l'opacità, cambio immagine al caricamento.
         main.style.opacity = ".2";
         const tmp = document.createElement("div");
@@ -683,8 +595,7 @@
       if (open) setTimeout(() => $("a", menu)?.focus(), 150);
     };
     toggle.addEventListener("click", () => setOpen(toggle.getAttribute("aria-expanded") !== "true"));
-    // Si chiude toccando un link o lo sfondo scuro fuori dal pannello.
-    menu.addEventListener("click", (e) => { if (e.target === menu || e.target.closest("a")) setOpen(false); });
+    menu.addEventListener("click", (e) => { if (e.target.closest("a")) setOpen(false); });
     document.addEventListener("keydown", (e) => {
       if (!menu.classList.contains("is-open")) return;
       if (e.key === "Escape") { setOpen(false); toggle.focus(); }
@@ -697,35 +608,6 @@
       }
     });
     window.matchMedia("(min-width: 901px)").addEventListener("change", (e) => e.matches && setOpen(false));
-  }
-
-  /* ---------------------------------------------------------------------------
-     B2b. CONTENUTI DEL MENU — categorie (con quanti prodotti) e prodotti in
-     evidenza, generati dal catalogo: aggiungi un prodotto e il menu si aggiorna.
-     ------------------------------------------------------------------------ */
-  function renderMenu() {
-    const panel = $("[data-menu-base]");
-    if (!panel) return;
-    const base = panel.dataset.menuBase || "";
-    const counts = PRODUCTS.reduce((m, p) => (p.category ? m.set(p.category, (m.get(p.category) || 0) + 1) : m), new Map());
-    const cats = $("[data-menu-cats]", panel);
-    if (cats && counts.size > 1) {
-      cats.innerHTML = [...counts.keys()].sort()
-        .map((c) => `<a href="${base}?cat=${encodeURIComponent(c)}#collection" data-cat-link="${esc(c)}">${esc(c)} <small>${counts.get(c)}</small></a>`).join("");
-      $("[data-menu-cats-wrap]", panel).hidden = false;
-    }
-    const picks = $("[data-menu-picks]", panel);
-    const list = [...featured, ...[...PRODUCTS].reverse().filter((p) => !p.featured)].slice(0, 3);
-    if (picks && list.length) {
-      const root = base === "/" ? "/" : ""; // la pagina 404 può stare in qualsiasi cartella
-      picks.innerHTML = list.map((p) => `
-        <li><a href="${root}${productPage(p)}">
-          <span class="mm-thumb">${img(p.image, { alt: "", sizes: "48px" })}</span>
-          <b>${esc(p.name)}</b>
-          <em>${isLive(p) ? esc(p.price || "") : "Soon"}</em>
-        </a></li>`).join("");
-      $("[data-menu-picks-wrap]", panel).hidden = false;
-    }
   }
 
   /* ---------------------------------------------------------------------------
@@ -861,10 +743,9 @@
     renderSpotlight();
     renderFeatured();
     renderCollection();
-    if (PRODUCTS.length) injectLD({ "@type": "ItemList", itemListElement: PRODUCTS.map((p, i) => ({ "@type": "ListItem", position: i + 1, item: productLD(p) })) });
+    if (PRODUCTS.length && $("[data-c2-list]")) injectLD({ "@type": "ItemList", itemListElement: PRODUCTS.map((p, i) => ({ "@type": "ListItem", position: i + 1, item: productLD(p) })) });
   }
   renderFooter();
-  renderMenu();
   initHeader();
   initMenu();
   initSpy();

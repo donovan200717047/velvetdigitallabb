@@ -2,12 +2,12 @@
    VelvetDigitalLabb — home.js (solo homepage)
    -----------------------------------------------------------------------------
    1. Entrata cinematografica (classe .is-ready quando i font sono pronti)
-   2. Scena hero ANIMATA DA SOLA: un numero 0→1 (--p) che va avanti e
-      indietro in loop, e da lì ricaviamo --t (testo che esce),
-      --a (strati che si separano), --s (frase). Non serve scorrere.
+   2. Scena hero "sticky": la scroll diventa un numero 0→1 (--p) e da lì
+      ricaviamo --t (testo che esce), --a (strati che si separano), --s (frase)
    3. Inclinazione 3D leggera degli strati seguendo il mouse
-   4. Collezione: griglia negozio + filtri + ricerca
+   4. Collezione: indice editoriale + anteprima sticky + filtri + ricerca
    5. Filosofia: parole che si "accendono" scorrendo
+   6. Pilastri: sezione sticky con 4 parole che si alternano
    Tutto vanilla JS, nessuna libreria. Ogni calcolo legato alla scroll gira
    al massimo una volta per fotogramma (requestAnimationFrame).
    ========================================================================== */
@@ -24,21 +24,63 @@
   // easing "easeInOutCubic": movimento morbido all'inizio e alla fine.
   const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 
+  /* ------------------------------- ANNUNCIO "NEW DROP" NELL'HERO
+     Mostra da solo l'ultimo prodotto con etichetta "New" (o l'ultimo
+     aggiunto): quando pubblichi una novità dal pannello, l'annuncio si
+     aggiorna senza toccare il codice. */
+  const drop = $("[data-drop]");
+  if (drop && PRODUCTS.length) {
+    const p = [...PRODUCTS].reverse().find((x) => /new/i.test(x.badge || "")) || PRODUCTS[PRODUCTS.length - 1];
+    drop.href = `product.html?p=${encodeURIComponent(p.id)}`;
+    drop.innerHTML = `<span class="drop__tag">New</span><span class="drop__txt"><b>${esc(p.name)}</b>${p.tagline ? `<span> — ${esc(p.tagline)}</span>` : ""}</span><span class="drop__go" aria-hidden="true">→</span>`;
+    drop.setAttribute("aria-label", `New release: ${p.name}`);
+    drop.hidden = false;
+  }
+
+  /* ------------------------------------------- INTRO (una volta per sessione) */
+  const introEl = $("[data-intro]");
+  if (introEl) {
+    let seen = false;
+    try { seen = sessionStorage.getItem("vdl-intro") === "1"; sessionStorage.setItem("vdl-intro", "1"); } catch (e) {}
+    if (reduce || seen) introEl.remove();
+    else document.documentElement.classList.add("has-intro"), setTimeout(() => { introEl.classList.add("is-done"); setTimeout(() => introEl.remove(), 1400); }, 1500);
+  }
+
   /* ---------------------------------------------------------------- 1. ENTRATA */
   const scene = $("[data-scene]");
-  // .is-ready fa entrare titolo e bottone. Con l'animazione attiva lo
-  // aggiunge la sequenza d'ingresso (punto 2b), nel momento giusto.
-  const ready = () => scene?.classList.add("is-ready");
-  const fontsReady = Promise.race([document.fonts ? document.fonts.ready : 0, new Promise((r) => setTimeout(r, 900))]);
-  if (reduce || !scene) ready();
-  else setTimeout(ready, 8000); // rete di sicurezza: il titolo compare comunque
+  const ready = () => setTimeout(() => scene?.classList.add("is-ready"), document.querySelector(".has-intro") ? 1500 : 0);
+  if (reduce) ready();
+  else Promise.race([document.fonts ? document.fonts.ready : 0, new Promise((r) => setTimeout(r, 900))]).then(() => requestAnimationFrame(ready));
 
   /* ---------------------------------------------------- 2. SCROLL → VARIABILI */
+  // Progresso di una sezione "sticky": 0 quando inizia, 1 quando finisce.
+  const progressOf = (el) => {
+    const r = el.getBoundingClientRect();
+    const total = r.height - innerHeight;
+    return total > 0 ? map(-r.top, 0, total) : 0;
+  };
+
+  const pillars = $("[data-pillars]");
+  const pillarItems = pillars ? $$(".pillar", pillars) : [];
   const words = [];
   let ticking = false;
 
   function update() {
     ticking = false;
+    // Hero: scorrendo, i testi salgono e sfumano dolcemente (solo lettura di scrollY,
+    // nessun blocco: la pagina scorre sempre in modo normale)
+    if (scene && !reduce) scene.style.setProperty("--t", map(scrollY, 0, innerHeight * 0.9).toFixed(4));
+    if (pillars && !reduce) {
+      const p = progressOf(pillars);
+      const i = Math.min(pillarItems.length - 1, Math.floor(p * pillarItems.length * 0.999));
+      pillarItems.forEach((el, k) => {
+        el.classList.toggle("is-on", k === i);
+        el.classList.toggle("is-past", k < i);
+      });
+      pillars.style.setProperty("--pp", p.toFixed(4));
+      const n = $("[data-pillars-n]", pillars);
+      if (n) n.textContent = String(i + 1).padStart(2, "0");
+    }
     if (words.length && !reduce) {
       // Le parole si accendono mentre il paragrafo attraversa lo schermo
       const r = words.host.getBoundingClientRect();
@@ -52,147 +94,50 @@
   addEventListener("resize", onScroll);
 
 
-  /* -------------------------------------- 2b. HERO: LA SCENA D'APERTURA
-     Appena si entra nel sito, SENZA scorrere, parte una breve "scena"
-     (circa 6,5 secondi):
-       1. i quattro strati di un sito web (Strategy, Structure, Content,
-          Design) scendono uno alla volta e si posano, con un piccolo lampo
-          di luce ogni volta; intanto la "camera" ruota piano;
-       2. la frase "Every great website is built in layers." compare parola
-          per parola, passando da sfocata a nitida;
-       3. gli strati si compattano nel sito finito (lampo più forte) ed
-          entrano il titolo e il bottone, che poi RESTANO fermi.
-     Ogni 30 secondi la scena si ripete (gli strati prima si sollevano e
-     spariscono), ma solo se la parte iniziale è sullo schermo, la scheda
-     è aperta e il mouse non è sopra il titolo o il bottone.
-     Per cambiare i tempi basta modificare i numeri qui sotto (millisecondi).
+  /* ------------------------------------- 2b. HERO: GLI STRATI SI ASSEMBLANO
+     All'apertura i 4 strati di un sito (HTML, CSS, JS, Launch) arrivano
+     separati, con le etichette, e in ~2,4 s si uniscono nel browser finito.
+     Parte da sola, una volta: NON intercetta rotella, touch o tastiera,
+     quindi lo scorrimento della pagina non viene mai bloccato.
+     --a = 1 strati separati · --a = 0 sito assemblato
      ------------------------------------------------------------------------ */
-  const T = {
-    words: 450,      // quando compare la prima parola della frase
-    wordGap: 120,    // distanza tra una parola e la successiva
-    land: 800,       // quando inizia a scendere il primo strato
-    landGap: 650,    // distanza tra uno strato e il successivo
-    landDur: 1150,   // quanto dura la discesa di ogni strato
-    hold: 4600,      // quando gli strati iniziano a compattarsi
-    join: 1400,      // durata della compattazione
-    title: 5000,     // quando entra il titolo
-    end: 6300,       // fine della scena
-    prelude: 900,    // (solo ripetizioni) gli strati si sollevano e spariscono
-    repeat: 30000    // ogni quanto si ripete
+  const setA = (v) => {
+    scene.style.setProperty("--a", v.toFixed(4));
+    window.VDL_GL && window.VDL_GL.setBoost && window.VDL_GL.setBoost(v); // il velluto "respira" con gli strati
   };
-
-  const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-  const easeIn = (x) => x * x * x;
-  const bump = (t, at, width) => Math.exp(-Math.pow((t - at) / width, 2)); // "picco" di luce
-  const planes = scene ? $$(".plane", scene) : [];
-  const set = (k, v) => scene.style.setProperty(k, typeof v === "number" ? v.toFixed(4) : v);
-
-  // La frase grande viene divisa in parole, che si accendono una per una.
-  const big = scene && $(".scene__big", scene);
-  const sWords = [];
-  if (big && !reduce) {
-    [...big.childNodes].forEach((n) => {
-      if (n.nodeType === 3) {
-        const frag = document.createDocumentFragment();
-        n.textContent.split(/(\s+)/).forEach((w) => {
-          if (!w.trim()) return frag.append(w);
-          const sp = document.createElement("span");
-          sp.className = "sw"; sp.textContent = w; frag.append(sp); sWords.push(sp);
-        });
-        n.replaceWith(frag);
-      } else if (n.nodeName === "EM") { n.classList.add("sw"); sWords.push(n); }
-    });
-  }
-
-  // Disegna la scena al tempo t (millisecondi dall'inizio della scena).
-  const draw = (t) => {
-    const joinP = ease(map(t, T.hold, T.hold + T.join));
-    const a = 1 - joinP;                                                      // strati separati → compatti
-    planes.forEach((pl, i) => {
-      const s0 = T.land + i * T.landGap;
-      pl.style.setProperty("--b", easeOut(map(t, s0, s0 + T.landDur)).toFixed(4)); // discesa di ogni strato
-    });
-    let f = bump(t, T.hold + T.join - 60, 240);                               // lampo finale
-    planes.forEach((_, i) => { f += 0.45 * bump(t, T.land + i * T.landGap + 520, 170); });
-    set("--a", a);
-    set("--f", Math.min(1, f));
-    set("--spin", `${(-12 * (1 - easeOut(map(t, 0, T.hold + T.join)))).toFixed(2)}deg`); // la camera ruota
-    set("--s", t < T.hold ? easeOut(map(t, 200, 900)) : 1 - ease(map(t, T.hold, T.hold + 600)));
-    const tt = 1 - ease(map(t, T.title, T.title + 800));
-    set("--t", tt);
-    scene.classList.toggle("is-open", tt > 0.3); // titolo nascosto = bottone non cliccabile
-    sWords.forEach((w, k) => w.classList.toggle("on", t >= T.words + k * T.wordGap));
-  };
-
-  // Solo per le ripetizioni: il titolo sfuma e gli strati si sollevano (dall'alto).
-  const drawPrelude = (t) => {
-    set("--t", ease(map(t, 0, 500)));
-    set("--a", 0); set("--s", 0); set("--f", 0);
-    planes.forEach((pl, i) => {
-      const s0 = 100 + (planes.length - 1 - i) * 90;
-      pl.style.setProperty("--b", (1 - easeIn(map(t, s0, s0 + 520))).toFixed(4));
-    });
-    scene.classList.add("is-open");
-  };
-
-  let playing = false;
-  let titleShown = false;
-  const play = (withPrelude) => new Promise((done) => {
-    playing = true;
-    const start = performance.now();
-    const pre = withPrelude ? T.prelude : 0;
-    const frame = (now) => {
-      const t = now - start;
-      if (t < pre) drawPrelude(t);
-      else {
-        draw(t - pre);
-        if (!titleShown && t - pre >= T.title - 200) { titleShown = true; ready(); }
-      }
-      if (t < pre + T.end) requestAnimationFrame(frame);
-      else { playing = false; done(); }
-    };
-    requestAnimationFrame(frame);
-  });
-
-  if (scene && !reduce) {
-    const copy = $("[data-hero-copy]");
-    let onScreen = true;
-    let hovering = false;
-    let started = false;
-    if ("IntersectionObserver" in window) {
-      new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; }).observe(scene);
+  if (scene) {
+    if (reduce) setA(0);
+    else {
+      setA(1);
+      const wait = document.documentElement.classList.contains("has-intro") ? 3000 : 1600;
+      setTimeout(() => {
+        const t0 = performance.now(), dur = 2400;
+        const step = (now) => {
+          const k = Math.min(1, (now - t0) / dur);
+          setA(1 - ease(k));
+          if (k < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      }, wait);
     }
-    // Solo sopra le righe di testo e il bottone (non su tutta la larghezza).
-    if (copy) [...copy.children].forEach((el) => {
-      el.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") hovering = true; });
-      el.addEventListener("pointerleave", () => { hovering = false; });
-    });
-    const canPlay = () => onScreen && !document.hidden && !hovering && !(copy && copy.contains(document.activeElement));
-
-    // Ripetizione: dopo 30 s riprova; se ora non è il momento, ricontrolla ogni secondo.
-    const schedule = (delay) => setTimeout(() => {
-      if (playing) return;
-      if (canPlay()) play(true).then(() => schedule(T.repeat));
-      else schedule(1000);
-    }, delay);
-
-    // Prima scena: parte appena i font sono pronti.
-    fontsReady.then(() => requestAnimationFrame(() => { started = true; play(false).then(() => schedule(T.repeat)); }));
-    // Rete di sicurezza: se per qualche motivo la scena non parte, mostra tutto.
-    setTimeout(() => { if (!started) planes.forEach((pl) => pl.style.setProperty("--b", 1)); }, 6000);
   }
 
-  /* ------------------------------------------------- 3. TILT 3D DEGLI STRATI */
+  /* ------------------------------------------------- 3. TILT 3D DEGLI STRATI
+     Morbido: il valore insegue il mouse un po' alla volta (niente scatti). */
   const tilt = $("[data-tilt-scene]");
   if (tilt && fine && !reduce) {
-    scene.addEventListener("pointermove", (e) => {
-      const x = e.clientX / innerWidth - 0.5;
-      const y = e.clientY / innerHeight - 0.5;
-      tilt.style.setProperty("--rx", `${(x * 8).toFixed(2)}deg`);
-      tilt.style.setProperty("--ry", `${(-y * 6).toFixed(2)}deg`);
-    });
-    scene.addEventListener("pointerleave", () => { tilt.style.removeProperty("--rx"); tilt.style.removeProperty("--ry"); });
+    let tx = 0, ty = 0, cx = 0, cy = 0, raf = 0;
+    const step = () => {
+      cx += (tx - cx) * 0.08; cy += (ty - cy) * 0.08;
+      tilt.style.setProperty("--rx", `${cx.toFixed(2)}deg`);
+      tilt.style.setProperty("--ry", `${cy.toFixed(2)}deg`);
+      raf = Math.abs(tx - cx) + Math.abs(ty - cy) > 0.01 ? requestAnimationFrame(step) : 0;
+    };
+    const go = () => { if (!raf) raf = requestAnimationFrame(step); };
+    scene.addEventListener("pointermove", (e) => { tx = (e.clientX / innerWidth - 0.5) * 6; ty = -(e.clientY / innerHeight - 0.5) * 4; go(); });
+    scene.addEventListener("pointerleave", () => { tx = 0; ty = 0; go(); });
   }
+
 
   /* ------------------------------------------------------------- 5. PAROLE */
   const philo = $("[data-words]");
@@ -205,179 +150,293 @@
     if (reduce) words.forEach((w) => w.classList.add("is-lit"));
   }
 
-  /* ----------------------------------------------------- 4. COLLEZIONE */
+  /* ----------------------------------------------------- 4. NEGOZIO
+     Card piccole stile Etsy/Vinted. Si vedono SEMPRE tutti i prodotti;
+     la paginazione 1-2-3 compare da sola solo oltre 24 risultati.
+     ------------------------------------------------------------------------ */
   const list = $("[data-c2-list]");
   if (list) {
     const tabsEl = $("[data-c2-tabs]");
     const search = $("[data-c2-search]");
-    const more = $("[data-c2-more]");
+    const sortEl = $("[data-c2-sort]");
+    const pager = $("[data-pager]");
     const empty = $("[data-c2-empty]");
-    const PAGE = 1000; // per ora si vedono SEMPRE tutti i prodotti (paginazione 1-2-3 più avanti)
+    const total = $("[data-total]");
+    const PER = 24;
+    const EXT = 'target="_blank" rel="noopener noreferrer"';
     const live = (p) => /^https:\/\//.test(p.url || "");
     const page = (p) => `product.html?p=${encodeURIComponent(p.id)}`;
     const ETSY = /il_(\d+xN|fullxfull)/;
     const sized = (src, w) => (ETSY.test(src) ? src.replace(ETSY, `il_${w}xN`) : src);
     const norm = (s) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    const num = (s) => parseFloat(String(s || "").replace(/[^\d.,]/g, "").replace(",", ".")) || 0;
 
-    // Ordine: in evidenza prima, poi i più recenti (gli ultimi aggiunti al catalogo)
-    const all = PRODUCTS.map((p, i) => ({ p, i, text: norm([p.name, p.category, p.tagline, p.description].join(" ")) }))
-      .sort((a, b) => (b.p.featured - a.p.featured) || (b.i - a.i));
+    const all = PRODUCTS.map((p, i) => ({ p, i, price: num(p.price), text: norm([p.name, p.category, p.tagline, p.description].join(" ")) }));
     const counts = PRODUCTS.reduce((m, p) => m.set(p.category, (m.get(p.category) || 0) + 1), new Map());
-    const state = { cat: "All", q: "", shown: PAGE };
+    const state = { cat: "All", q: "", sort: "new", page: 1 };
+    if (total) total.textContent = PRODUCTS.length;
 
     tabsEl.innerHTML = ["All", ...[...counts.keys()].filter(Boolean).sort()]
       .map((c) => `<button class="c2-tab" type="button" data-c="${esc(c)}" aria-pressed="${c === "All"}">${esc(c)}<sup>${c === "All" ? PRODUCTS.length : counts.get(c)}</sup></button>`)
       .join("");
 
-    // Card piccola stile negozio online (Etsy / Vinted): immagine quadrata,
-    // nome su 2 righe, prezzo. Al passaggio del mouse compare la 2ª foto.
-    // Il clic apre la PAGINA PRODOTTO del sito (product.html); da lì il
-    // bottone "Buy on Etsy" porta all'annuncio Etsy.
+    // Fila di categorie: sfuma il bordo destro solo se c'è altro da scorrere
+    const tabsFit = () => {
+      const max = tabsEl.scrollWidth - tabsEl.clientWidth;
+      tabsEl.classList.toggle("is-scroll", max > 1);
+      tabsEl.classList.toggle("is-end", tabsEl.scrollLeft >= max - 2);
+    };
+    tabsEl.addEventListener("scroll", tabsFit, { passive: true });
+    addEventListener("resize", tabsFit);
+    requestAnimationFrame(tabsFit);
+
     const card = ({ p }, k) => {
       const alt = p.gallery && p.gallery[0];
       return `
-      <li class="sg-item" style="--i:${k % PAGE}">
+      <li class="sg-item" style="--i:${k}">
         <a class="sg-card" href="${page(p)}">
-          <span class="sg-media mat" style="--bg:url('${esc(sized(p.image, 570))}')">
+          <span class="sg-media">
             <img src="${esc(sized(p.image, 570))}" alt="${esc(p.etsyTitle || p.name)}" loading="lazy" width="570" height="570">
             ${alt ? `<img class="sg-alt" src="${esc(sized(alt, 570))}" alt="" loading="lazy" width="570" height="570">` : ""}
             ${p.badge ? `<span class="sg-badge">${esc(p.badge)}</span>` : ""}
+            <span class="sg-go">View details <span aria-hidden="true">→</span></span>
           </span>
           <span class="sg-info">
             <span class="sg-cat">${esc(p.category || "")}</span>
             <span class="sg-name">${esc(p.name)}</span>
-            <span class="sg-row"><b class="sg-price">${live(p) ? esc(p.price || "") : "Coming soon"}</b><span class="sg-etsy">View →</span></span>
+            <b class="sg-price">${live(p) ? esc(p.price || "") : "Coming soon"}</b>
           </span>
         </a>
       </li>`;
     };
 
+    const SORTS = {
+      new: (a, b) => b.i - a.i,                       // ultimi aggiunti per primi
+      "price-asc": (a, b) => a.price - b.price || b.i - a.i,
+      "price-desc": (a, b) => b.price - a.price || b.i - a.i,
+      az: (a, b) => a.p.name.localeCompare(b.p.name),
+    };
     const results = () => {
       const terms = norm(state.q).split(/\s+/).filter(Boolean);
-      return all.filter((x) => (state.cat === "All" || x.p.category === state.cat) && terms.every((t) => x.text.includes(t)));
+      return all.filter((x) => (state.cat === "All" || x.p.category === state.cat) && terms.every((t) => x.text.includes(t)))
+        .sort(SORTS[state.sort] || SORTS.new);
     };
-    const render = () => {
+    const render = (scroll) => {
       const res = results();
-      list.innerHTML = res.slice(0, state.shown).map(card).join("");
-      more.hidden = res.length <= state.shown;
-      more.textContent = `Show more (${res.length - state.shown})`;
+      const pages = Math.max(1, Math.ceil(res.length / PER));
+      state.page = Math.min(state.page, pages);
+      list.innerHTML = res.slice((state.page - 1) * PER, state.page * PER).map(card).join("");
       empty.hidden = res.length > 0;
-    };
-    const setCat = (c) => {
-      state.cat = c === "All" || counts.has(c) ? c : "All"; state.shown = PAGE;
-      $$("[data-c]", tabsEl).forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.c === state.cat)));
-      // Su telefono la barra delle categorie scorre: porta in vista quella scelta.
-      const on = $('[aria-pressed="true"]', tabsEl);
-      if (on) tabsEl.scrollLeft = on.offsetLeft - tabsEl.offsetLeft - 20;
-      render();
+      pager.hidden = pages < 2;
+      pager.innerHTML = pages < 2 ? "" : Array.from({ length: pages }, (_, k) =>
+        `<button type="button" data-pg="${k + 1}"${k + 1 === state.page ? ' aria-current="page"' : ""}>${k + 1}</button>`).join("");
+      if (scroll) $("#collection").scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
     };
     tabsEl.addEventListener("click", (e) => {
       const b = e.target.closest("[data-c]");
-      if (b) setCat(b.dataset.c);
-    });
-    // Categoria dal menu: sulla home filtra senza ricaricare la pagina...
-    document.addEventListener("click", (e) => {
-      const a = e.target.closest("[data-cat-link]");
-      if (!a || e.metaKey || e.ctrlKey) return;
-      e.preventDefault();
-      setCat(a.dataset.catLink);
-      $("#collection").scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
+      if (!b) return;
+      state.cat = b.dataset.c; state.page = 1;
+      $$("[data-c]", tabsEl).forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      render();
     });
     let t;
-    search.addEventListener("input", () => { clearTimeout(t); t = setTimeout(() => { state.q = search.value.trim(); state.shown = PAGE; render(); }, 150); });
-    more.addEventListener("click", () => { state.shown += PAGE; render(); });
-    // ...e arrivando da un'altra pagina (es. product.html) legge ?cat= dall'indirizzo.
-    const fromUrl = new URLSearchParams(location.search).get("cat");
-    if (fromUrl) setCat(fromUrl); else render();
+    search.addEventListener("input", () => { clearTimeout(t); t = setTimeout(() => { state.q = search.value.trim(); state.page = 1; render(); }, 150); });
+    sortEl?.addEventListener("change", () => { state.sort = sortEl.value; state.page = 1; render(); });
+    pager.addEventListener("click", (e) => { const b = e.target.closest("[data-pg]"); if (b) { state.page = +b.dataset.pg; render(true); } });
+    // Arrivando dalla pagina prodotto (link categoria) si apre già filtrato
+    try {
+      const want = sessionStorage.getItem("vdl-cat"); sessionStorage.removeItem("vdl-cat");
+      const b = want && $$("[data-c]", tabsEl).find((x) => x.dataset.c === want);
+      if (b) { state.cat = want; $$("[data-c]", tabsEl).forEach((x) => x.setAttribute("aria-pressed", String(x === b))); }
+    } catch (e) {}
+    render();
   }
+
+  /* --------------------------------- EDITOR CHE SCRIVE + MINI-SITO IN LOOP */
+  const codeEl = $("[data-code]");
+  const site = $("[data-site] .site");
+  const cursor = $("[data-cursor]");
+  if (codeEl && site) {
+    const LINES = [
+      ['<span class="cm">&lt;!-- yourbrand.com --&gt;</span>'],
+      ['<span class="tg">&lt;header</span> <span class="at">class</span>=<span class="st">"nav"</span><span class="tg">&gt;</span>'],
+      ['  <span class="tg">&lt;h1&gt;</span>Launch faster.<span class="tg">&lt;/h1&gt;</span>'],
+      ['  <span class="tg">&lt;button</span> <span class="at">data-theme</span><span class="tg">&gt;</span>◐<span class="tg">&lt;/button&gt;</span>'],
+      ['<span class="tg">&lt;/header&gt;</span>'],
+      ['<span class="at">:root</span> { <span class="at">--accent</span>: <span class="st">#e0552d</span>; }'],
+    ];
+    // Scrive il codice una riga alla volta (HTML già colorato, niente tag spezzati)
+    const strip = (h) => h.replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const move = (x, y) => { if (cursor) { cursor.style.left = x + "%"; cursor.style.top = y + "%"; } };
+    const click = async () => { cursor?.classList.add("is-click"); await sleep(160); cursor?.classList.remove("is-click"); };
+
+    if (reduce) { codeEl.innerHTML = LINES.map((l) => l[0]).join("\n"); }
+    else (async function loop() {
+      await sleep(1800);
+      for (;;) {
+        site.classList.add("is-skel"); site.classList.remove("is-dark");
+        codeEl.innerHTML = "";
+        let done = "";
+        for (const [html] of LINES) {
+          const plain = strip(html);
+          for (let c = 1; c <= plain.length; c += 2) {
+            codeEl.innerHTML = done + esc(plain.slice(0, c)) + '<span class="caret"></span>';
+            await sleep(document.hidden ? 200 : 26);
+          }
+          done += html + "\n";
+          codeEl.innerHTML = done + '<span class="caret"></span>';
+          if (html.includes("h1")) site.classList.remove("is-skel"); // il sito "si costruisce"
+          await sleep(120);
+        }
+        // il cursore va sul toggle e passa al tema scuro, poi torna chiaro
+        await sleep(500); move(91, 15); await sleep(1100); await click(); site.classList.add("is-dark");
+        await sleep(1800); move(20, 50); await sleep(1000); move(91, 15); await sleep(1100); await click(); site.classList.remove("is-dark");
+        await sleep(1400); move(62, 70); await sleep(1600);
+      }
+    })();
+  }
+
+  /* ---------------------------------------------- luce che segue il mouse */
+  const spot = $(".scene__spot");
+  if (spot && fine && !reduce) scene.addEventListener("pointermove", (e) => {
+    spot.style.setProperty("--mx", `${e.clientX}px`); spot.style.setProperty("--my", `${e.clientY}px`);
+  });
+
+
+  /* ------------------------------------------------ LAB: prova dal vivo */
+  // Ricerca: digitazione dimostrativa con risultati VERI del catalogo.
+  // Robusta: sempre 3 righe (le vuote restano come segnaposto) → il riquadro
+  // non cambia mai altezza; le righe si ridisegnano solo se i risultati
+  // cambiano davvero (niente lampeggi); si ferma quando non è visibile.
+  const fakeT = $("[data-fake-type]"), fakeR = $("[data-fake-res]");
+  if (fakeT && fakeR && PRODUCTS.length) {
+    const SLOTS = 3;
+    const idx = PRODUCTS.map((p) => ({ p, t: [p.name, p.category, p.tagline, p.etsyTitle].join(" ").toLowerCase() }));
+    const thumb = (src) => String(src || "").replace(/il_(\d+xN|fullxfull)/, "il_340x270");
+    // Parole dimostrative: solo quelle che trovano almeno un prodotto nel catalogo attuale
+    const words = ["dashboard", "portfolio", "builder", "saas", "brand"].filter((w) => idx.some((x) => x.t.includes(w)));
+    let shown = "";
+    const show = (q) => {
+      const hits = q ? idx.filter((x) => x.t.includes(q)).slice(0, SLOTS).map((x) => x.p) : [];
+      const key = hits.map((p) => p.id).join("|");
+      if (key === shown) return;
+      shown = key;
+      fakeR.innerHTML = Array.from({ length: SLOTS }, (_, k) => {
+        const p = hits[k];
+        return p
+          ? `<li><img src="${esc(thumb(p.image))}" alt="" loading="lazy" width="40" height="40"><span>${esc(p.name)}</span><b>${esc(p.price || "")}</b></li>`
+          : `<li class="is-empty"><i></i><span></span><b></b></li>`;
+      }).join("");
+    };
+    show("");
+    if (reduce || !words.length) { fakeT.textContent = words[0] || "Search templates…"; show(words[0] || ""); }
+    else {
+      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+      let visible = false;
+      const whenVisible = async () => { while (!visible || document.hidden) await sleep(250); };
+      new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: 0.3 }).observe(fakeT.closest(".ltile") || fakeT);
+      (async () => {
+        for (let k = 0; ; k = (k + 1) % words.length) {
+          await whenVisible();
+          const w = words[k];
+          for (let c = 1; c <= w.length; c++) { fakeT.textContent = w.slice(0, c); show(w.slice(0, c)); await sleep(110); }
+          await sleep(2200);
+          fakeT.textContent = "Search templates…"; show(""); await sleep(600);
+        }
+      })();
+    }
+  }
+
+  // Trama di punti: si spostano lontano dal puntatore e tornano con una molla
+  const dc = $("[data-dots]");
+  if (dc) {
+    const ctx = dc.getContext("2d");
+    let W, H, pts = [], mx = -999, my = -999, raf = 0, vis = false;
+    const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#e0552d";
+    const build = () => {
+      const r = dc.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2);
+      W = r.width; H = r.height; dc.width = W * d; dc.height = H * d; ctx.setTransform(d, 0, 0, d, 0, 0);
+      const gap = W < 400 ? 18 : 22; pts = [];
+      for (let y = gap / 2; y < H; y += gap) for (let x = gap / 2; x < W; x += gap) pts.push({ ox: x, oy: y, x, y, vx: 0, vy: 0 });
+    };
+    const frame = () => {
+      raf = 0; ctx.clearRect(0, 0, W, H);
+      let moving = false;
+      for (const p of pts) {
+        const dx = p.x - mx, dy = p.y - my, dist = Math.hypot(dx, dy), R = 90;
+        if (dist < R) { const f = (1 - dist / R) * 3.2; p.vx += (dx / (dist || 1)) * f; p.vy += (dy / (dist || 1)) * f; }
+        p.vx += (p.ox - p.x) * 0.06; p.vy += (p.oy - p.y) * 0.06; p.vx *= 0.82; p.vy *= 0.82;
+        p.x += p.vx; p.y += p.vy;
+        const off = Math.hypot(p.x - p.ox, p.y - p.oy);
+        if (off > 0.15) moving = true;
+        const k = Math.min(1, off / 18);
+        ctx.fillStyle = k > 0.05 ? accent : "rgba(242,238,232,.22)";
+        ctx.globalAlpha = 0.35 + k * 0.65;
+        ctx.beginPath(); ctx.arc(p.x, p.y, 1.4 + k * 2, 0, 6.283); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      if ((moving || mx > -999) && vis && !reduce) raf = requestAnimationFrame(frame);
+    };
+    const kick = () => { if (!raf) raf = requestAnimationFrame(frame); };
+    const pos = (e) => { const r = dc.getBoundingClientRect(); mx = e.clientX - r.left; my = e.clientY - r.top; kick(); };
+    dc.addEventListener("pointermove", pos); dc.addEventListener("pointerdown", pos);
+    dc.addEventListener("pointerleave", () => { mx = my = -999; kick(); });
+    new IntersectionObserver(([e]) => { vis = e.isIntersecting; if (vis) kick(); }).observe(dc);
+    addEventListener("resize", () => { build(); kick(); });
+    build(); kick();
+  }
+
+  // Responsive: la cornice si stringe e la griglia si riorganizza
+  const range = $("[data-resp-range]");
+  const frame = $("[data-resp-frame]");
+  if (range && frame) {
+    const setW = () => {
+      const w = +range.value;
+      frame.style.width = w + "%";
+      frame.dataset.cols = w > 70 ? 3 : w > 45 ? 2 : 1;
+    };
+    range.addEventListener("input", setW); setW();
+    // piccola dimostrazione automatica la prima volta che si vede
+    if (!reduce && "IntersectionObserver" in window) {
+      const o = new IntersectionObserver(([e]) => {
+        if (!e.isIntersecting) return; o.disconnect();
+        let k = 0; const seq = [100, 60, 32, 60, 100];
+        const id = setInterval(() => { range.value = seq[k]; setW(); if (++k >= seq.length) clearInterval(id); }, 900);
+        range.addEventListener("pointerdown", () => clearInterval(id), { once: true });
+      }, { threshold: 0.6 });
+      o.observe(frame);
+    }
+  }
+
+  // Luce che segue il mouse sui bordi delle tessere
+  if (fine && !reduce) $$("[data-spot]").forEach((g) => g.addEventListener("pointermove", (e) => {
+    $$(".ltile", g).forEach((t) => {
+      const r = t.getBoundingClientRect();
+      t.style.setProperty("--sx", `${e.clientX - r.left}px`); t.style.setProperty("--sy", `${e.clientY - r.top}px`);
+    });
+  }));
+
+  /* ----------------------------- titoletti che si "decodificano" entrando */
+  if (!reduce && "IntersectionObserver" in window) {
+    const CH = "ABCDEFGHIJKLMNOPQRSTUVWXYZ#/<>_*";
+    const scramble = (el) => {
+      const final = el.textContent; let f = 0;
+      const id = setInterval(() => {
+        f++;
+        el.textContent = [...final].map((c, i) => (c === " " || i < f * 0.9 ? c : CH[(Math.random() * CH.length) | 0])).join("");
+        if (f * 0.9 >= final.length) { clearInterval(id); el.textContent = final; }
+      }, 28);
+    };
+    const so = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { so.unobserve(e.target); scramble(e.target); } }), { threshold: 1 });
+    $$("main .kicker").filter((k) => !k.closest(".scene") && k.children.length === 0).forEach((k) => so.observe(k));
+  }
+
 
   /* ------------------------------------------- FINALE + linee dei passi */
   if ("IntersectionObserver" in window) {
     const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("is-in"); io.unobserve(e.target); } }), { threshold: 0.25 });
     $$("[data-finale]").forEach((el) => io.observe(el));
-  }
-
-  /* ----------------------------------------- RICHIESTA PERSONALIZZATA
-     Scheda "Need something made for you?" sotto i prodotti.
-     - Il bottone apre/chiude il modulo.
-     - Arrivando da una pagina prodotto (?about=id#custom) il modulo si apre
-       da solo con il prodotto già scelto.
-     - L'invio va a Netlify Forms (form "custom-request"); Netlify inoltra
-       la richiesta per email. Se qualcosa va storto mostriamo l'indirizzo
-       email con il messaggio già pronto.
-     ------------------------------------------------------------------ */
-  const custom = $("[data-custom]");
-  if (custom) {
-    const form = $("[data-custom-form]", custom);
-    const openBtn = $("[data-custom-open]", custom);
-    const status = $("[data-custom-status]", custom);
-    const sendBtn = $("[data-custom-send]", custom);
-    const productSel = $("[data-custom-products]", custom);
-    const EMAIL = (window.VDL_SITE && window.VDL_SITE.email) || "";
-    const mailto = (body = "") =>
-      `mailto:${EMAIL}?subject=${encodeURIComponent("Custom product request")}${body ? `&body=${encodeURIComponent(body)}` : ""}`;
-
-    // Indirizzo email visibile (scritto da JS: i robot che raccolgono email lo trovano meno facilmente)
-    if (EMAIL) {
-      const a = $("[data-mail-link]", custom);
-      a.href = mailto(); a.textContent = EMAIL;
-      $("[data-custom-mail]", custom).hidden = false;
-    }
-    // Elenco prodotti nel menu a tendina "Related product"
-    productSel.insertAdjacentHTML("beforeend", PRODUCTS.map((p) => `<option value="${esc(p.name)}" data-id="${esc(p.id)}">${esc(p.name)}</option>`).join(""));
-
-    const setOpen = (open, focus) => {
-      form.hidden = !open;
-      custom.classList.toggle("is-open", open);
-      openBtn.setAttribute("aria-expanded", String(open));
-      if (open && focus) setTimeout(() => $("input[name=name]", form).focus({ preventScroll: true }), 50);
-    };
-    openBtn.addEventListener("click", () => setOpen(form.hidden, true));
-
-    const openFromLink = () => {
-      setOpen(true);
-      requestAnimationFrame(() => custom.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" }));
-    };
-    // ?about=id → prodotto già selezionato
-    const about = new URLSearchParams(location.search).get("about");
-    if (about) {
-      const opt = [...productSel.options].find((o) => o.dataset.id === about);
-      if (opt) { opt.selected = true; $("select[name=type]", form).value = "Changes to one of your products"; }
-    }
-    if (location.hash === "#custom") setTimeout(openFromLink, 300);
-    addEventListener("hashchange", () => { if (location.hash === "#custom") openFromLink(); });
-    $$("[data-custom-link]").forEach((l) => l.addEventListener("click", (e) => {
-      if (l.getAttribute("href").replace(/^\.?\/?/, "") !== "#custom") return; // link da altre pagine: lascia navigare
-      e.preventDefault();
-      history.replaceState(null, "", "#custom");
-      openFromLink();
-    }));
-
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      if (!form.checkValidity()) { form.reportValidity(); return; }
-      const data = new FormData(form);
-      sendBtn.disabled = true; sendBtn.textContent = "Sending…";
-      status.className = "cf-status"; status.textContent = "";
-      try {
-        const res = await fetch("/", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams(data).toString()
-        });
-        if (!res.ok) throw new Error(res.status);
-        custom.classList.add("is-sent");
-        form.innerHTML = `<div class="cf-done"><b>Thank you! Your request is on its way.</b><span>We'll reply to <em>${esc(data.get("email"))}</em> as soon as possible.</span></div>`;
-      } catch (err) {
-        // Invio non riuscito: offriamo l'email con il messaggio già scritto
-        const body = `${data.get("message") || ""}\n\n— ${data.get("type") || ""}${data.get("product") ? ` · ${data.get("product")}` : ""}\n${data.get("name") || ""} (${data.get("email") || ""})`;
-        status.className = "cf-status is-error";
-        status.innerHTML = EMAIL
-          ? `Sorry, the request couldn't be sent. <a href="${esc(mailto(body))}">Email it to us instead</a> — your message is already written.`
-          : "Sorry, the request couldn't be sent. Please try again in a moment.";
-        sendBtn.disabled = false; sendBtn.textContent = "Send request";
-      }
-    });
   }
 
   /* -------------------------------------------- social nel footer minimal */

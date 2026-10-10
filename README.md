@@ -55,8 +55,6 @@ Su GitHub apri `admin/config.yml` → icona matita → nella riga `repo:` sostit
 ### 5. Usalo
 Vai su **https://velvetdigitallabb.netlify.app/admin/**, clicca **Login with GitHub** → **Catalogo → Prodotti** → **Aggiungi prodotto** → compila → **Pubblica**.
 
-Nel campo **Descrizione completa (come su Etsy)** incolla la descrizione dell'annuncio Etsy così com'è: diventa la sezione "About this product" della pagina prodotto. Cliccando un prodotto nel sito si apre prima la sua pagina; il bottone **Buy on Etsy** porta all'annuncio.
-
 ## Provarlo sul computer
 - Doppio clic su `index.html`: funziona direttamente.
 - Se modifichi a mano `content/products.json`, lancia `node scripts/build.mjs` per rigenerare `js/products.js`.

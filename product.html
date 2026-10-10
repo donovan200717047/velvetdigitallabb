@@ -5,22 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- Rileva JS il prima possibile: abilita le animazioni solo se JS funziona. -->
   <script>document.documentElement.className = document.documentElement.className.replace("no-js", "js");</script>
+  <script>try{if(sessionStorage.getItem("vdl-trans")==="1")document.documentElement.classList.add("came")}catch(e){}</script>
 
   <title>Product — VelvetDigitalLabb</title>
-  <meta name="description" content="Premium Canva workbooks and templates for small businesses and creators: plan, structure and write your website with clarity. Instant download, secure checkout on Etsy.">
-  <link rel="canonical" href="https://velvetdigitallabb.netlify.app/product.html">
+  <meta name="description" content="Premium HTML website templates, admin dashboards and Canva workbooks for freelancers, creators and startups. Hand-coded, documented, instant download on Etsy.">
+  <link rel="canonical" href="https://velvetdigitallabb.netlify.app/product.html" data-canonical>
   <meta name="theme-color" content="#0e0d0c">
 
   <!-- Open Graph / social: anteprima quando il link viene condiviso -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="VelvetDigitalLabb">
-  <meta property="og:title" content="VelvetDigitalLabb — Canva Workbooks for Your Website">
-  <meta property="og:description" content="Plan, structure and write your website with premium Canva workbooks. Instant download on Etsy.">
-  <meta property="og:url" content="https://velvetdigitallabb.netlify.app/">
+  <meta property="og:title" content="VelvetDigitalLabb — Websites that look expensive">
+  <meta property="og:description" content="Premium HTML templates, dashboards and digital tools. Download today, launch this week.">
+  <meta property="og:url" content="https://velvetdigitallabb.netlify.app/product.html">
   <meta property="og:image" content="https://velvetdigitallabb.netlify.app/img/og-image.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="VelvetDigitalLabb — Canva workbooks for planning and writing your website">
+  <meta property="og:image:alt" content="VelvetDigitalLabb — premium website templates, dashboards and digital tools">
   <meta name="twitter:card" content="summary_large_image">
 
   <link rel="icon" href="favicon.ico" sizes="any">
@@ -32,102 +33,92 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://i.etsystatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400..800;1,14..32,400..800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400..800;1,14..32,400..800&family=JetBrains+Mono:wght@400;600&display=swap">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/home.css">
+  <link rel="stylesheet" href="css/fx.css">
+  <link rel="stylesheet" href="css/product.css">
+
 </head>
-<body>
+<body class="home pdp-page">
   <a class="skip-link" href="#main">Skip to content</a>
 
-  <!-- ===================== HEADER ===================== -->
-  <header class="site-header" data-header>
-    <span class="progress" data-progress aria-hidden="true"></span>
-    <div class="container">
-      <a class="brand" href="./" aria-label="VelvetDigitalLabb — home">
-        <svg class="brand__mark" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="24" fill="#191716"/><g transform="translate(5 6) scale(.9)"><polygon points="22,24 36,24 50,63 50,80 43,80" fill="#f2eee8"/><polygon points="50,63 64,24 78,24 57,80 50,80" fill="#e0552d"/><path d="M79 9l2.2 4.4 4.4 2.2-4.4 2.2L79 22.2l-2.2-4.4-4.4-2.2 4.4-2.2z" fill="#e0552d"/></g></svg>
-        <span>Velvet<em>Digital</em>Labb</span>
-      </a>
-      <nav class="nav" aria-label="Main">
+
+  <!-- ===================== HEADER: pillola di vetro ===================== -->
+  <header class="site-header site-header--home site-header--pdp" data-header>
+    <div class="container hdr">
+      <a class="brand" href="./" aria-label="VelvetDigitalLabb — home"><svg class="brand__mark" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="24" fill="#191716"/><g transform="translate(5 6) scale(.9)"><polygon points="22,24 36,24 50,63 50,80 43,80" fill="#f2eee8"/><polygon points="50,63 64,24 78,24 57,80 50,80" fill="#e0552d"/><path d="M79 9l2.2 4.4 4.4 2.2-4.4 2.2L79 22.2l-2.2-4.4-4.4-2.2 4.4-2.2z" fill="#e0552d"/></g></svg><span>Velvet<em>Digital</em>Labb</span></a>
+      <nav class="nav pill-nav" aria-label="Main">
         <ul class="nav__links">
-          <li><a href="./#collection">Collection</a></li>
+          <li><a href="./#collection">Shop</a></li>
           <li><a href="./#studio">Studio</a></li>
-          <li><a href="./#process">Process</a></li>
+          <li><a href="./#lab">Try it</a></li>
+          <li><a href="#newsletter">Newsletter</a></li>
         </ul>
-        <a class="btn btn--ghost btn--small" data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">
-          Etsy shop
-          <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg>
-          <span class="visually-hidden">(opens in a new tab)</span>
-        </a>
+      </nav>
+      <div class="hdr__end">
+        <button class="srch" type="button" data-palette-open aria-label="Search products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search</span><kbd>⌘K</kbd></button>
+        <a class="btn btn--small" data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">Etsy shop <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg><span class="visually-hidden">(opens in a new tab)</span></a>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" data-menu-toggle>
           <span data-menu-label>Menu</span><span class="menu-toggle__icon" aria-hidden="true"></span>
         </button>
-      </nav>
+      </div>
     </div>
   </header>
 
-  <div class="mobile-menu" id="mobile-menu" data-menu>
-    <!-- Menu compatto: le categorie e i prodotti in evidenza li inserisce main.js -->
-    <div class="mm-panel" data-menu-base="./">
-      <nav class="mm-nav" aria-label="Mobile">
-        <a class="mm-link" href="./#collection"><b>Collection</b><span>Browse every product</span></a>
-        <a class="mm-link" href="./#studio"><b>Studio</b><span>Who we are</span></a>
-        <a class="mm-link" href="./#process"><b>How it works</b><span>Three simple steps</span></a>
-      </nav>
-      <div class="mm-block" data-menu-cats-wrap hidden>
-        <p class="mm-label">Shop by category</p>
-        <div class="mm-cats" data-menu-cats></div>
-      </div>
-      <div class="mm-block" data-menu-picks-wrap hidden>
-        <p class="mm-label">Featured</p>
-        <ul class="mm-picks" data-menu-picks></ul>
-      </div>
-      <div class="mm-foot">
-        <a class="btn btn--small" data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">Visit the Etsy shop <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg><span class="visually-hidden">(opens in a new tab)</span></a>
-        <a class="mm-custom" href="./#custom" data-custom-link>Need something custom? <b>Request it →</b></a>
-        <p>Instant download · Secure checkout on Etsy</p>
-      </div>
+  <div class="mobile-menu velvet" id="mobile-menu" data-menu>
+    <nav aria-label="Mobile">
+      <ul>
+        <li><a class="mm-link" href="./#collection"><span>01</span>Shop</a></li>
+        <li><a class="mm-link" href="./#studio"><span>02</span>Studio</a></li>
+        <li><a class="mm-link" href="./#lab"><span>03</span>Try it live</a></li>
+        <li><a class="mm-link" href="#newsletter"><span>04</span>Newsletter</a></li>
+      </ul>
+    </nav>
+    <div class="mobile-menu__foot">
+      <a class="btn" data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">Visit the Etsy shop <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg><span class="visually-hidden">(opens in a new tab)</span></a>
+      <p>Instant download · Secure checkout on Etsy</p>
     </div>
   </div>
-  <main id="main" data-product-root>
-    <noscript><section class="notfound velvet"><div class="container"><h1>Our products</h1><p>Please enable JavaScript, or browse the collection on <a href="https://www.etsy.com/shop/VelvetDigitalLabb">Etsy</a>.</p></div></section></noscript>
+
+  <main id="main" class="pdp" data-pdp>
+    <noscript><div class="container" style="padding:8rem 0"><h1>Our products</h1><p>Please enable JavaScript, or browse the collection on <a href="https://www.etsy.com/shop/VelvetDigitalLabb">Etsy</a>.</p></div></noscript>
   </main>
 
-  <footer class="site-footer" data-footer>
+  <footer class="site-footer site-footer--min vfoot" data-footer id="newsletter">
     <div class="container">
-      <div class="footer__top">
-        <div class="footer__brand">
-          <a class="brand" href="./"><svg class="brand__mark" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="24" fill="#191716"/><g transform="translate(5 6) scale(.9)"><polygon points="22,24 36,24 50,63 50,80 43,80" fill="#f2eee8"/><polygon points="50,63 64,24 78,24 57,80 50,80" fill="#e0552d"/><path d="M79 9l2.2 4.4 4.4 2.2-4.4 2.2L79 22.2l-2.2-4.4-4.4-2.2 4.4-2.2z" fill="#e0552d"/></g></svg><span>Velvet<em>Digital</em>Labb</span></a>
-          <p>Canva workbooks and templates for planning, structuring and writing your website.</p>
+      <div class="vfoot__top">
+        <div class="vfoot__nl">
+          <p class="kicker">Newsletter</p>
+          <h2 class="vfoot__title">New drops, <em>first.</em></h2>
+          <p class="vfoot__lead">Get an email when a new template launches. Only new releases and studio news — no spam.</p>
+          <form class="nl" name="newsletter" method="POST" action="thanks.html" data-netlify="true" netlify-honeypot="bot-field" data-newsletter>
+            <input type="hidden" name="form-name" value="newsletter">
+            <p class="nl__hp" hidden><label>Leave empty <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+            <label class="visually-hidden" for="nl-email">Your email</label>
+            <div class="nl__row">
+              <input id="nl-email" type="email" name="email" required placeholder="you@email.com" autocomplete="email" inputmode="email">
+              <button class="btn" type="submit"><span data-nl-label>Subscribe</span> <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+            </div>
+            <p class="nl__note" data-nl-msg role="status">By subscribing you agree to receive emails from VelvetDigitalLabb. Unsubscribe by replying to any email.</p>
+          </form>
         </div>
-        <div class="footer__col">
-          <h2>Explore</h2>
-          <ul>
-            <li><a href="./#collection">Collection</a></li>
-            <li><a href="./#studio">Studio</a></li>
-            <li><a href="./#process">Process</a></li>
-            <li><a href="./#custom">Custom requests</a></li>
-          </ul>
-        </div>
-        <div class="footer__col">
-          <h2>Shop</h2>
-          <ul data-footer-products>
-            <li><a data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">Etsy shop ↗</a></li>
-          </ul>
-        </div>
-        <div class="footer__col" data-footer-social hidden>
-          <h2>Follow</h2>
-          <ul></ul>
-        </div>
+        <nav class="vfoot__nav" aria-label="Footer">
+          <div><h2>Shop</h2><a href="./#collection">All products</a><button type="button" data-palette-open>Search <kbd>⌘K</kbd></button><a data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">Etsy shop ↗</a></div>
+          <div><h2>Studio</h2><a href="./#studio">About</a><a href="./#lab">Try it live</a><a href="./#process">How it works</a><span data-footer-social-inline></span></div>
+        </nav>
       </div>
+      <p class="vfoot__word" data-wordmark aria-hidden="true">VelvetDigitalLabb</p>
       <div class="footer__bottom">
         <p>© <span data-year>2026</span> VelvetDigitalLabb. All rights reserved.</p>
-        <p>Purchases are processed securely by Etsy.</p>
+        <p>Digital products · Purchases processed securely by Etsy.</p>
       </div>
     </div>
   </footer>
 
-  <!-- Ordine importante: prima i dati, poi il codice che li usa. "defer" =
-       scaricati in parallelo, eseguiti dopo l'HTML, nell'ordine scritto. -->
   <script src="js/products.js" defer></script>
   <script src="js/main.js" defer></script>
+  <script src="js/fx.js" defer></script>
+  <script src="js/product.js" defer></script>
 </body>
 </html>

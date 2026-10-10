@@ -5,22 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <!-- Rileva JS il prima possibile: abilita le animazioni solo se JS funziona. -->
   <script>document.documentElement.className = document.documentElement.className.replace("no-js", "js");</script>
+  <script>try{if(sessionStorage.getItem("vdl-trans")==="1")document.documentElement.classList.add("came")}catch(e){}</script>
 
-  <title>VelvetDigitalLabb — Digital Design Tools for Better Websites</title>
-  <meta name="description" content="Premium digital design tools — Canva workbooks, website templates and resources for creators and small businesses. Plan, design and launch a more professional website. Instant download on Etsy.">
+  <title>VelvetDigitalLabb — Website Templates, Dashboards & Digital Tools</title>
+  <meta name="description" content="Premium HTML website templates, admin dashboards and Canva workbooks for freelancers, creators and startups. Hand-coded, documented, instant download on Etsy.">
   <link rel="canonical" href="https://velvetdigitallabb.netlify.app/">
   <meta name="theme-color" content="#0e0d0c">
 
   <!-- Open Graph / social: anteprima quando il link viene condiviso -->
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="VelvetDigitalLabb">
-  <meta property="og:title" content="VelvetDigitalLabb — Digital Design Tools for Better Websites">
-  <meta property="og:description" content="Premium templates, workbooks and resources to plan, design and launch your website. Instant download on Etsy.">
+  <meta property="og:title" content="VelvetDigitalLabb — Websites that look expensive">
+  <meta property="og:description" content="Premium HTML templates, dashboards and digital tools. Download today, launch this week.">
   <meta property="og:url" content="https://velvetdigitallabb.netlify.app/">
   <meta property="og:image" content="https://velvetdigitallabb.netlify.app/img/og-image.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="VelvetDigitalLabb — Canva workbooks for planning and writing your website">
+  <meta property="og:image:alt" content="VelvetDigitalLabb — premium website templates, dashboards and digital tools">
   <meta name="twitter:card" content="summary_large_image">
 
   <link rel="icon" href="favicon.ico" sizes="any">
@@ -32,9 +33,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://i.etsystatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400..800;1,14..32,400..800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400..800;1,14..32,400..800&family=JetBrains+Mono:wght@400;600&display=swap">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/home.css">
+  <link rel="stylesheet" href="css/fx.css">
 
   <!-- Dati strutturati (Schema.org): chi siamo. I prodotti vengono aggiunti da main.js. -->
   <script type="application/ld+json">
@@ -62,258 +64,277 @@
 <body class="home">
   <a class="skip-link" href="#main">Skip to content</a>
 
-  <!-- ===================== HEADER ===================== -->
+  <!-- ===== INTRO: il logo si disegna, poi il sipario si alza (solo 1ª visita) ===== -->
+  <div class="intro" data-intro aria-hidden="true">
+    <svg class="intro__mark" viewBox="0 0 100 100">
+      <polygon class="i-l" points="22,24 36,24 50,63 50,80 43,80"/>
+      <polygon class="i-r" points="50,63 64,24 78,24 57,80 50,80"/>
+      <path class="i-s" d="M79 9l2.2 4.4 4.4 2.2-4.4 2.2L79 22.2l-2.2-4.4-4.4-2.2 4.4-2.2z"/>
+    </svg>
+    <p class="intro__word"><span>Velvet</span><em>Digital</em><span>Labb</span></p>
+  </div>
+
+  <!-- ===================== HEADER: pillola di vetro ===================== -->
   <header class="site-header site-header--home" data-header>
-    <div class="container">
+    <div class="container hdr">
       <a class="brand" href="./" aria-label="VelvetDigitalLabb — home"><svg class="brand__mark" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="24" fill="#191716"/><g transform="translate(5 6) scale(.9)"><polygon points="22,24 36,24 50,63 50,80 43,80" fill="#f2eee8"/><polygon points="50,63 64,24 78,24 57,80 50,80" fill="#e0552d"/><path d="M79 9l2.2 4.4 4.4 2.2-4.4 2.2L79 22.2l-2.2-4.4-4.4-2.2 4.4-2.2z" fill="#e0552d"/></g></svg><span>Velvet<em>Digital</em>Labb</span></a>
-      <nav class="nav" aria-label="Main">
+      <nav class="nav pill-nav" aria-label="Main">
         <ul class="nav__links">
-          <li><a href="#collection">Collection</a></li>
+          <li><a href="#collection">Shop</a></li>
           <li><a href="#studio">Studio</a></li>
-          <li><a href="#process">Process</a></li>
+          <li><a href="#lab">Try it</a></li>
+          <li><a href="#newsletter">Newsletter</a></li>
         </ul>
-        <a class="btn btn--ghost btn--small" data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">Etsy shop <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg><span class="visually-hidden">(opens in a new tab)</span></a>
+      </nav>
+      <div class="hdr__end">
+        <button class="srch" type="button" data-palette-open aria-label="Search products"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span>Search</span><kbd>⌘K</kbd></button>
+        <a class="btn btn--small" data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">Etsy shop <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg><span class="visually-hidden">(opens in a new tab)</span></a>
         <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" data-menu-toggle>
           <span data-menu-label>Menu</span><span class="menu-toggle__icon" aria-hidden="true"></span>
         </button>
-      </nav>
+      </div>
     </div>
   </header>
 
-  <div class="mobile-menu" id="mobile-menu" data-menu>
-    <!-- Menu compatto: le categorie e i prodotti in evidenza li inserisce main.js -->
-    <div class="mm-panel" data-menu-base="">
-      <nav class="mm-nav" aria-label="Mobile">
-        <a class="mm-link" href="#collection"><b>Collection</b><span>Browse every product</span></a>
-        <a class="mm-link" href="#studio"><b>Studio</b><span>Who we are</span></a>
-        <a class="mm-link" href="#process"><b>How it works</b><span>Three simple steps</span></a>
-      </nav>
-      <div class="mm-block" data-menu-cats-wrap hidden>
-        <p class="mm-label">Shop by category</p>
-        <div class="mm-cats" data-menu-cats></div>
-      </div>
-      <div class="mm-block" data-menu-picks-wrap hidden>
-        <p class="mm-label">Featured</p>
-        <ul class="mm-picks" data-menu-picks></ul>
-      </div>
-      <div class="mm-foot">
-        <a class="btn btn--small" data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">Visit the Etsy shop <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg><span class="visually-hidden">(opens in a new tab)</span></a>
-        <a class="mm-custom" href="#custom" data-custom-link>Need something custom? <b>Request it →</b></a>
-        <p>Instant download · Secure checkout on Etsy</p>
-      </div>
+  <div class="mobile-menu velvet" id="mobile-menu" data-menu>
+    <nav aria-label="Mobile">
+      <ul>
+        <li><a class="mm-link" href="#collection"><span>01</span>Shop</a></li>
+        <li><a class="mm-link" href="#studio"><span>02</span>Studio</a></li>
+        <li><a class="mm-link" href="#lab"><span>03</span>Try it live</a></li>
+        <li><a class="mm-link" href="#newsletter"><span>04</span>Newsletter</a></li>
+      </ul>
+    </nav>
+    <div class="mobile-menu__foot">
+      <a class="btn" data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">Visit the Etsy shop <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg><span class="visually-hidden">(opens in a new tab)</span></a>
+      <p>Instant download · Secure checkout on Etsy</p>
     </div>
   </div>
+
   <main id="main">
 
     <!-- =====================================================================
-         1 + 2. HERO CINEMATOGRAFICA + TRANSIZIONE
-         Appena si entra, l'animazione parte DA SOLA (home.js): gli strati
-         esplodono, compare la frase, poi entra il titolo. Si ripete ogni 30 s.
-         Il CSS usa --p per: far uscire il titolo, separare i 4 "strati" di un
-         sito web (strategia, struttura, contenuti, design), mostrare le etichette
-         e la frase finale. Nessun prodotto: è il "mondo" del brand.
+         1. HERO — "live build": all'apertura i 4 strati di un sito (HTML, CSS,
+         JS, Launch) arrivano separati e si assemblano in un browser 3D; poi il
+         sito si costruisce da solo (scheletro → contenuti → tema chiaro/scuro)
+         mentre un editor scrive il codice. Nessun blocco dello scroll.
          ================================================================== -->
     <section class="scene" data-scene aria-labelledby="hero-title">
       <div class="scene__sticky">
+        <canvas class="scene__gl" data-gl aria-hidden="true"></canvas>
         <div class="scene__light" aria-hidden="true"></div>
         <div class="scene__grid" aria-hidden="true"></div>
+        <div class="scene__spot" aria-hidden="true"></div>
 
-        <!-- Visual: quattro piani sovrapposti in prospettiva -->
-        <div class="stack" data-stack aria-hidden="true">
+        <div class="stack" aria-hidden="true">
           <div class="stack__tilt" data-tilt-scene>
-            <div class="plane plane--strategy"><i class="dots"></i><span class="tag"><b>01</b> Strategy</span></div>
-            <div class="plane plane--structure"><i class="wf wf--nav"></i><i class="wf wf--hero"></i><i class="wf wf--a"></i><i class="wf wf--b"></i><i class="wf wf--c"></i><span class="tag"><b>02</b> Structure</span></div>
-            <div class="plane plane--content"><i class="tx tx--h"></i><i class="tx"></i><i class="tx tx--s"></i><i class="tx"></i><i class="tx tx--s"></i><i class="tx tx--m"></i><span class="tag"><b>03</b> Content</span></div>
-            <div class="plane plane--design"><i class="ds ds--nav"></i><i class="ds ds--title"></i><i class="ds ds--line"></i><i class="ds ds--btn"></i><i class="ds ds--img"></i><i class="ds ds--sweep"></i><span class="tag"><b>04</b> Design</span></div>
+            <!-- 01 HTML: struttura -->
+            <div class="plane plane--html">
+              <i class="wf wf--nav"></i><i class="wf wf--hero"></i><i class="wf wf--a"></i><i class="wf wf--b"></i><i class="wf wf--c"></i>
+              <span class="tag"><b>01</b> HTML · Structure</span>
+            </div>
+            <!-- 02 CSS: stile -->
+            <div class="plane plane--css">
+              <i class="sw sw--1"></i><i class="sw sw--2"></i><i class="sw sw--3"></i><i class="sw sw--4"></i>
+              <i class="ty">Aa</i><i class="rad"></i>
+              <span class="tag"><b>02</b> CSS · Style</span>
+            </div>
+            <!-- 03 JS: movimento -->
+            <div class="plane plane--js">
+              <svg class="curve" viewBox="0 0 200 100" preserveAspectRatio="none"><path d="M0 90 C 60 90, 70 10, 200 10"/></svg>
+              <i class="kf kf--1"></i><i class="kf kf--2"></i><i class="kf kf--3"></i>
+              <span class="tag"><b>03</b> JS · Motion</span>
+            </div>
+            <!-- 04 il sito finito, dentro una finestra del browser -->
+            <div class="plane plane--site" data-site>
+              <div class="bw__bar"><i></i><i></i><i></i><span class="bw__url">yourbrand.com</span></div>
+              <div class="site">
+                <div class="site__nav"><b></b><span></span><span></span><span></span><em class="site__toggle" data-toggle></em></div>
+                <div class="site__hero">
+                  <div class="site__copy"><i class="s-k"></i><i class="s-h1"></i><i class="s-h2"></i><i class="s-p"></i><i class="s-btn"></i></div>
+                  <div class="site__chart"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                </div>
+                <div class="site__cards"><i></i><i></i><i></i></div>
+              </div>
+              <span class="tag"><b>04</b> Launch</span>
+            </div>
           </div>
         </div>
 
-        <!-- Testo hero -->
+        <!-- Editor di codice che scrive da solo -->
+        <div class="code" aria-hidden="true">
+          <div class="code__bar"><i></i><i></i><i></i><span>index.html</span></div>
+          <pre class="code__body" data-code></pre>
+        </div>
+
         <div class="scene__copy container" data-hero-copy>
-          <p class="kicker" data-enter style="--e:.5s">VelvetDigitalLabb · Digital design studio</p>
+          <!-- Annuncio dell'ultima novità: lo compila home.js leggendo il catalogo -->
+          <a class="drop" data-drop data-enter style="--e:.2s" href="#collection" hidden></a>
+          <p class="kicker" data-enter style="--e:.35s"><span class="dot"></span> Website templates · Dashboards · Digital tools</p>
           <h1 class="scene__title" id="hero-title">
-            <span class="ln"><span data-enter style="--e:.65s">Digital tools for</span></span>
-            <span class="ln"><span data-enter style="--e:.78s">beautiful <em>websites.</em></span></span>
+            <span class="ln"><span data-enter style="--e:.5s">Websites that</span></span>
+            <span class="ln"><span data-enter style="--e:.62s">look <em class="shine">expensive.</em></span></span>
           </h1>
-          <p class="scene__lead" data-enter style="--e:1s">Templates, workbooks and resources to plan, design and launch a more professional online presence.</p>
-          <div class="scene__ctas" data-enter style="--e:1.15s">
-            <a class="btn" href="#collection">Explore the collection <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" style="transform:rotate(135deg)"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+          <p class="scene__lead" data-enter style="--e:.85s">Hand-coded templates, dashboards and workbooks for freelancers, creators and startups. Download today — launch this week.</p>
+          <div class="scene__ctas" data-enter style="--e:1s">
+            <a class="btn" href="#collection">Shop the collection <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" style="transform:rotate(135deg)"><path d="M7 17 17 7M8 7h9v9"/></svg></a>
+            <a class="btn btn--ghost" data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">View on Etsy <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg><span class="visually-hidden">(opens in a new tab)</span></a>
           </div>
         </div>
 
-        <!-- Frase che compare durante la transizione -->
-        <div class="scene__statement container" data-statement>
-          <p class="kicker">How great websites are made</p>
-          <p class="scene__big">Every great website<br>is built in <em>layers.</em></p>
-          <p class="scene__small">We design the tools for each one.</p>
-        </div>
 
         <div class="scene__cue" aria-hidden="true"><span>Scroll</span><i></i></div>
       </div>
     </section>
 
+    <!-- Nastro: tecnologie e formati (tutti veri) -->
+    <div class="ticker" aria-hidden="true">
+      <div class="ticker__track">
+        <span>HTML</span><b>✦</b><span>CSS</span><b>✦</b><span>JavaScript</span><b>✦</b><span>Dark &amp; Light mode</span><b>✦</b><span>Canva</span><b>✦</b><span>Google Sheets</span><b>✦</b><span>Responsive</span><b>✦</b><span>No-code builder</span><b>✦</b><span>API docs</span><b>✦</b><span>Customer guide included</span><b>✦</b>
+        <span>HTML</span><b>✦</b><span>CSS</span><b>✦</b><span>JavaScript</span><b>✦</b><span>Dark &amp; Light mode</span><b>✦</b><span>Canva</span><b>✦</b><span>Google Sheets</span><b>✦</b><span>Responsive</span><b>✦</b><span>No-code builder</span><b>✦</b><span>API docs</span><b>✦</b><span>Customer guide included</span><b>✦</b>
+      </div>
+    </div>
+
     <!-- =====================================================================
-         3. COLLEZIONE — l'unica sezione con i prodotti.
-         Griglia stile negozio online (Etsy, Vinted, Nike): card piccole con
-         foto, nome e prezzo. Filtri, ricerca e "Show more" per 6 o 500 prodotti.
+         2. NEGOZIO — l'unica sezione con i prodotti. Card piccole stile Etsy /
+         Vinted. Si vedono SEMPRE tutti; oltre 24 compare la paginazione 1-2-3.
          ================================================================== -->
     <section class="collection2" id="collection" aria-labelledby="collection-title">
       <div class="container">
-        <header class="c2-head">
-          <p class="kicker" data-reveal>The collection</p>
-          <h2 class="c2-title" id="collection-title" data-reveal style="--d:.08s">Shop the <em>collection.</em></h2>
-          <div class="c2-tools" data-reveal style="--d:.16s">
-            <div class="c2-tabs" role="group" aria-label="Filter by category" data-c2-tabs></div>
+        <header class="shop-top">
+          <div>
+            <p class="kicker" data-reveal>The collection</p>
+            <h2 class="c2-title" id="collection-title" data-reveal style="--d:.06s">Shop the <em>studio.</em> <sup data-total></sup></h2>
+          </div>
+          <div class="shop-top__tools" data-reveal style="--d:.12s">
             <label class="c2-search"><span class="visually-hidden">Search the collection</span>
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-              <input type="search" placeholder="Search" autocomplete="off" data-c2-search>
+              <input type="search" placeholder="Search templates…" autocomplete="off" data-c2-search>
+            </label>
+            <label class="c2-sort"><span class="visually-hidden">Sort</span>
+              <select data-c2-sort>
+                <option value="new">Newest</option>
+                <option value="price-asc">Price: low to high</option>
+                <option value="price-desc">Price: high to low</option>
+                <option value="az">Name A–Z</option>
+              </select>
             </label>
           </div>
         </header>
+        <div class="c2-tabs" role="group" aria-label="Filter by category" data-c2-tabs></div>
 
         <ul class="shopgrid" data-c2-list aria-live="polite"></ul>
+        <p class="c2-empty" data-c2-empty hidden>Nothing matches your search.</p>
+        <nav class="pager" aria-label="Pages" data-pager hidden></nav>
+
         <div class="c2-foot">
-          <button class="c2-more" type="button" data-c2-more hidden>Show more</button>
-          <p class="c2-empty" data-c2-empty hidden>Nothing matches your search.</p>
           <a class="link-underline" data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">View the full shop on Etsy ↗<span class="visually-hidden"> (opens in a new tab)</span></a>
         </div>
         <noscript><p>Browse every product on our <a href="https://www.etsy.com/shop/VelvetDigitalLabb">Etsy shop</a>.</p></noscript>
-
-        <!-- =================================================================
-             RICHIESTA PRODOTTO PERSONALIZZATO
-             Scheda compatta subito sotto i prodotti: chiusa di default, il
-             modulo si apre con un clic. Le richieste arrivano a Netlify
-             (Netlify Forms) che le inoltra per email. Se l'invio fallisce,
-             il visitatore può scrivere direttamente all'indirizzo email
-             (lo inserisce home.js da content/settings.json → "email").
-             ============================================================== -->
-        <div class="custom" id="custom" data-custom data-reveal>
-          <div class="custom__top">
-            <div class="custom__text">
-              <p class="kicker">Made to order</p>
-              <h2 class="custom__title">Need something <em>made for you?</em></h2>
-              <p>Different pages, your brand colours, extra features or a completely new tool: tell us what you need and we'll reply by email with an idea and a quote.</p>
-            </div>
-            <div class="custom__actions">
-              <button class="btn" type="button" aria-expanded="false" aria-controls="custom-form" data-custom-open>Request a custom product <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-              <p class="custom__mail" data-custom-mail hidden>or write to <a data-mail-link href="#"></a></p>
-            </div>
-          </div>
-
-          <form class="custom__form" id="custom-form" name="custom-request" method="POST" data-netlify="true" netlify-honeypot="bot-field" data-custom-form hidden>
-            <input type="hidden" name="form-name" value="custom-request">
-            <input type="hidden" name="subject" value="Custom product request — VelvetDigitalLabb">
-            <p class="visually-hidden"><label>Leave this empty <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
-            <div class="cf-grid">
-              <label class="cf-field"><span>Your name</span><input type="text" name="name" autocomplete="name" placeholder="Alex"></label>
-              <label class="cf-field"><span>Your email <b aria-hidden="true">*</b></span><input type="email" name="email" autocomplete="email" required placeholder="you@example.com"></label>
-              <label class="cf-field"><span>What do you need?</span>
-                <select name="type">
-                  <option>A website template</option>
-                  <option>A Canva workbook or planner</option>
-                  <option>A spreadsheet or tool</option>
-                  <option>Changes to one of your products</option>
-                  <option>Something else</option>
-                </select>
-              </label>
-              <label class="cf-field"><span>Related product <i>(optional)</i></span>
-                <select name="product" data-custom-products><option value="">None / not sure</option></select>
-              </label>
-              <label class="cf-field cf-field--wide"><span>Tell us about your request <b aria-hidden="true">*</b></span>
-                <textarea name="message" rows="4" required placeholder="e.g. The SaaS template with two extra pages, my brand colours and an Italian version."></textarea>
-              </label>
-            </div>
-            <div class="cf-foot">
-              <button class="btn btn--dark" type="submit" data-custom-send>Send request</button>
-              <p class="cf-note">We only use your details to reply to this request.</p>
-            </div>
-            <p class="cf-status" data-custom-status role="status" aria-live="polite"></p>
-          </form>
-        </div>
       </div>
     </section>
 
     <!-- =====================================================================
-         4. FILOSOFIA — una frase che si "accende" parola per parola scorrendo.
+         3. STUDIO — frase che si accende parola per parola
          ================================================================== -->
     <section class="philo" id="studio" aria-labelledby="philo-title">
       <div class="container">
         <p class="kicker" data-reveal>The studio</p>
         <h2 class="visually-hidden" id="philo-title">About VelvetDigitalLabb</h2>
-        <p class="philo__text" data-words>VelvetDigitalLabb creates digital tools that help creators, small businesses, entrepreneurs and designers turn ideas into more professional web projects.</p>
+        <p class="philo__text" data-words>VelvetDigitalLabb is an independent studio crafting website templates, dashboards and digital tools — so freelancers, creators and startups can launch work that looks professional from day one.</p>
         <div class="philo__foot">
-          <p data-reveal>Not more software to learn. Clear frameworks, beautiful templates and practical guides — so the thinking gets done and the work looks the part.</p>
+          <p data-reveal>Not another generator. Every product is designed, hand-coded, tested and documented — the details a five-minute shortcut never gets right.</p>
           <p data-reveal style="--d:.1s">Independent studio · Digital products · Made for the modern web</p>
         </div>
       </div>
     </section>
 
     <!-- =====================================================================
-         5. COME FUNZIONA — tre passi, numeri enormi, linee che si disegnano.
+         4. LAB — prova le funzioni dal vivo (niente scroll bloccato)
          ================================================================== -->
-    <section class="process" id="process" aria-labelledby="process-title">
+    <section class="lab" id="lab" aria-labelledby="lab-title">
       <div class="container">
-        <div class="process__head">
-          <p class="kicker" data-reveal>How it works</p>
-          <h2 class="process__title" id="process-title" data-reveal style="--d:.08s">Three steps.<br>No learning curve.</h2>
+        <div class="lab__head">
+          <p class="kicker" data-reveal>Try it live</p>
+          <h2 class="lab__title" id="lab-title" data-reveal style="--d:.06s">Don't take our word. <em>Play with it.</em></h2>
         </div>
-        <ol class="steps2">
-          <li data-reveal><span class="steps2__n">01</span><h3>Choose</h3><p>Pick the tool that fits your next step and buy it securely on Etsy.</p></li>
-          <li data-reveal style="--d:.12s"><span class="steps2__n">02</span><h3>Customize</h3><p>Download instantly and make it yours in Canva, Google Sheets, Excel or code.</p></li>
-          <li data-reveal style="--d:.24s"><span class="steps2__n">03</span><h3>Create</h3><p>Follow the guide, fill in the frameworks and launch something you're proud of.</p></li>
-        </ol>
+        <div class="lbento" data-spot>
+          <!-- Ricerca istantanea in tutto il negozio -->
+          <article class="ltile ltile--find" data-reveal>
+            <div class="ltile__copy"><p class="ltile__k">01 · Instant search</p><h3>Find anything. Instantly.</h3><p data-touch-copy="Tap the search icon at the top of any page and find any product as you type.">Press <kbd>⌘K</kbd> (or <kbd>/</kbd>) anywhere on this site and search the whole shop as you type.</p></div>
+            <button type="button" class="fakebar" data-palette-open><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span data-fake-type>Search templates…</span><kbd>⌘K</kbd></button>
+            <ul class="fakeres" aria-hidden="true" data-fake-res></ul>
+          </article>
+          <!-- Responsive: trascina e guarda il layout riorganizzarsi -->
+          <article class="ltile ltile--resp" data-reveal style="--d:.12s">
+            <div class="ltile__copy"><p class="ltile__k">02 · Responsive</p><h3>Drag it. It adapts.</h3><p>Phone, tablet, desktop — every layout is built to reflow.</p></div>
+            <div class="resp" data-resp>
+              <div class="resp__frame" data-resp-frame>
+                <div class="resp__grid"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+              </div>
+            </div>
+            <label class="resp__range"><span class="visually-hidden">Preview width</span><input type="range" min="28" max="100" value="100" data-resp-range></label>
+          </article>
+          <!-- Codice -->
+          <article class="ltile ltile--code" data-reveal style="--d:.16s">
+            <div class="ltile__copy"><p class="ltile__k">03 · Hand-coded</p><h3>Clean code. No lock-in.</h3><p>Plain HTML, CSS and JavaScript — commented, no frameworks. Plus a step-by-step guide.</p></div>
+            <div class="codewall" aria-hidden="true">
+              <div class="codewall__track mono">&lt;section class="hero"&gt; · :root { --accent } · @media (max-width: 768px) · addEventListener("click") · prefers-color-scheme · &lt;nav aria-label&gt; · grid-template-columns · requestAnimationFrame · &lt;section class="hero"&gt; · :root { --accent } · @media (max-width: 768px) · addEventListener("click") · prefers-color-scheme · &lt;nav aria-label&gt; · grid-template-columns · requestAnimationFrame ·</div>
+              <div class="codewall__track codewall__track--rev mono">.btn:hover { translate } · const theme = localStorage · &lt;img loading="lazy"&gt; · color-mix(in srgb) · @keyframes reveal · aspect-ratio: 16 / 9 · IntersectionObserver · .btn:hover { translate } · const theme = localStorage · &lt;img loading="lazy"&gt; · color-mix(in srgb) · @keyframes reveal · aspect-ratio: 16 / 9 · IntersectionObserver ·</div>
+              <div class="codewall__track codewall__track--slow mono">&lt;section class="hero"&gt; · :root { --accent } · @media (max-width: 768px) · addEventListener("click") · prefers-color-scheme · &lt;nav aria-label&gt; · grid-template-columns · requestAnimationFrame · &lt;section class="hero"&gt; · :root { --accent } · @media (max-width: 768px) · addEventListener("click") · prefers-color-scheme · &lt;nav aria-label&gt; · grid-template-columns · requestAnimationFrame ·</div>
+            </div>
+          </article>
+        </div>
       </div>
     </section>
 
     <!-- =====================================================================
-         6. FIDUCIA — solo affermazioni vere, nessuna recensione inventata.
-         ================================================================== -->
-    <section class="assure" aria-labelledby="assure-title">
-      <div class="container assure__grid">
-        <div>
-          <p class="kicker" data-reveal>What you can count on</p>
-          <h2 class="assure__title" id="assure-title" data-reveal style="--d:.08s">Simple, honest,<br><em>ready to use.</em></h2>
-        </div>
-        <ul class="assure__list">
-          <li data-reveal><b>Digital products</b><span>Delivered as files. Nothing is shipped, nothing to wait for.</span></li>
-          <li data-reveal style="--d:.06s"><b>Instant access</b><span>Download right after checkout from your Etsy purchases.</span></li>
-          <li data-reveal style="--d:.12s"><b>Designed for modern businesses</b><span>Made for freelancers, creators and small teams.</span></li>
-          <li data-reveal style="--d:.18s"><b>Editable templates</b><span>Change colours, fonts and text to match your brand.</span></li>
-          <li data-reveal style="--d:.24s"><b>Practical resources</b><span>Every product comes with a step-by-step customer guide.</span></li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- =====================================================================
-         7. CTA FINALE CINEMATOGRAFICA — gli strati tornano e si ricompongono.
+         6. FINALE
          ================================================================== -->
     <section class="finale" data-finale aria-labelledby="finale-title">
+      <canvas class="finale__gl" data-gl aria-hidden="true"></canvas>
       <div class="finale__light" aria-hidden="true"></div>
-      <div class="finale__layers" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       <div class="container finale__inner">
         <p class="kicker" data-reveal>Your next project</p>
-        <h2 class="finale__title" id="finale-title" data-reveal style="--d:.08s">Ready to build<br>something <em>better?</em></h2>
+        <h2 class="finale__title" id="finale-title" data-reveal style="--d:.08s">Ready to launch<br>something <em>better?</em></h2>
         <div class="finale__ctas" data-reveal style="--d:.2s">
-          <a class="btn btn--light" data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">Explore the collection on Etsy <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg><span class="visually-hidden">(opens in a new tab)</span></a>
+          <a class="btn" href="#collection">Browse the collection</a>
+          <a class="btn btn--light" data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">Explore the shop on Etsy <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M7 17 17 7M8 7h9v9"/></svg><span class="visually-hidden">(opens in a new tab)</span></a>
         </div>
+        <ol class="fsteps" id="process" aria-label="How it works">
+          <li data-reveal style="--d:.25s"><b>01</b><span><strong>Pick</strong>Choose a product and buy it securely on Etsy.</span></li>
+          <li data-reveal style="--d:.32s"><b>02</b><span><strong>Download</strong>Your files are ready instantly in your Etsy purchases.</span></li>
+          <li data-reveal style="--d:.39s"><b>03</b><span><strong>Customize</strong>Follow the guide: your text, colours and logo.</span></li>
+          <li data-reveal style="--d:.46s"><b>04</b><span><strong>Launch</strong>Publish or put it to work — it's yours.</span></li>
+        </ol>
       </div>
     </section>
   </main>
 
-  <!-- ===================== FOOTER ===================== -->
-  <footer class="site-footer site-footer--min" data-footer>
+  <footer class="site-footer site-footer--min vfoot" data-footer id="newsletter">
     <div class="container">
-      <div class="fmin">
-        <a class="brand" href="./"><svg class="brand__mark" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="24" fill="#191716"/><g transform="translate(5 6) scale(.9)"><polygon points="22,24 36,24 50,63 50,80 43,80" fill="#f2eee8"/><polygon points="50,63 64,24 78,24 57,80 50,80" fill="#e0552d"/><path d="M79 9l2.2 4.4 4.4 2.2-4.4 2.2L79 22.2l-2.2-4.4-4.4-2.2 4.4-2.2z" fill="#e0552d"/></g></svg><span>Velvet<em>Digital</em>Labb</span></a>
-        <nav class="fmin__nav" aria-label="Footer">
-          <a href="#collection">Collection</a>
-          <a href="#studio">Studio</a>
-          <a href="#process">Process</a>
-          <a href="#custom" data-custom-link>Custom requests</a>
-          <a data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">Etsy shop ↗</a>
-          <span data-footer-social-inline></span>
+      <div class="vfoot__top">
+        <div class="vfoot__nl">
+          <p class="kicker">Newsletter</p>
+          <h2 class="vfoot__title">New drops, <em>first.</em></h2>
+          <p class="vfoot__lead">Get an email when a new template launches. Only new releases and studio news — no spam.</p>
+          <form class="nl" name="newsletter" method="POST" action="thanks.html" data-netlify="true" netlify-honeypot="bot-field" data-newsletter>
+            <input type="hidden" name="form-name" value="newsletter">
+            <p class="nl__hp" hidden><label>Leave empty <input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+            <label class="visually-hidden" for="nl-email">Your email</label>
+            <div class="nl__row">
+              <input id="nl-email" type="email" name="email" required placeholder="you@email.com" autocomplete="email" inputmode="email">
+              <button class="btn" type="submit"><span data-nl-label>Subscribe</span> <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+            </div>
+            <p class="nl__note" data-nl-msg role="status">By subscribing you agree to receive emails from VelvetDigitalLabb. Unsubscribe by replying to any email.</p>
+          </form>
+        </div>
+        <nav class="vfoot__nav" aria-label="Footer">
+          <div><h2>Shop</h2><a href="./#collection">All products</a><button type="button" data-palette-open>Search <kbd>⌘K</kbd></button><a data-shop-link href="https://www.etsy.com/shop/VelvetDigitalLabb" target="_blank" rel="noopener noreferrer">Etsy shop ↗</a></div>
+          <div><h2>Studio</h2><a href="./#studio">About</a><a href="./#lab">Try it live</a><a href="./#process">How it works</a><span data-footer-social-inline></span></div>
         </nav>
       </div>
+      <p class="vfoot__word" data-wordmark aria-hidden="true">VelvetDigitalLabb</p>
       <div class="footer__bottom">
         <p>© <span data-year>2026</span> VelvetDigitalLabb. All rights reserved.</p>
         <p>Digital products · Purchases processed securely by Etsy.</p>
@@ -323,6 +344,8 @@
 
   <script src="js/products.js" defer></script>
   <script src="js/main.js" defer></script>
+  <script src="js/gl.js" defer></script>
+  <script src="js/fx.js" defer></script>
   <script src="js/home.js" defer></script>
 </body>
 </html>

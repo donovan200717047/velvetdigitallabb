@@ -51,14 +51,9 @@ collections:
                 widget: image
                 choose_url: true
                 hint: "Carica un file (JPG/WebP, circa 1200 px) oppure incolla il link di un'immagine Etsy."
-              - { label: "Categoria", name: category, widget: string, hint: "Diventa un filtro del catalogo. Usa sempre lo stesso nome: Branding, Website Planning, Copywriting, Bundles…" }
+              - { label: "Categoria", name: category, widget: string, hint: "Diventa un filtro del catalogo. Usa sempre lo stesso nome: Website Templates, Website Builder, Dashboards, Branding, Bundles…" }
               - { label: "Frase breve (tagline)", name: tagline, widget: string, required: false }
-              - { label: "Descrizione", name: description, widget: text, hint: "Breve (2-3 righe): appare in alto nella pagina prodotto e su Google." }
-              - label: "Descrizione completa (come su Etsy)"
-                name: details
-                widget: text
-                required: false
-                hint: "Incolla qui la descrizione dell'annuncio Etsy così com'è. Righe TUTTE MAIUSCOLE = titoletti; righe che iniziano con • - ✓ = elenchi; righe che iniziano con 1. 2. 3. = passaggi numerati. Lascia una riga vuota tra un blocco e l'altro."
+              - { label: "Descrizione", name: description, widget: text }
               - { label: "Prezzo", name: price, widget: string, required: false, hint: "Es. €17.90 — lascia vuoto per non mostrarlo" }
               - { label: "In evidenza (sezione Featured)", name: featured, widget: boolean, default: false }
               - { label: "Etichetta", name: badge, widget: string, required: false, hint: "Es. New, Flagship. Facoltativa." }
@@ -94,7 +89,6 @@ collections:
           - { label: "Nome del brand", name: name, widget: string }
           - { label: "Indirizzo del sito", name: url, widget: string }
           - { label: "Link allo shop Etsy", name: shopUrl, widget: string }
-          - { label: "Email per le richieste personalizzate", name: email, widget: string, required: false, hint: "Compare nella sezione 'Need something made for you?' della home." }
           - label: "Social"
             name: social
             widget: list
